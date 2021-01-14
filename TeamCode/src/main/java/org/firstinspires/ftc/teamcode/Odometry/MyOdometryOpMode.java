@@ -24,36 +24,42 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import java.io.File;
 
 
-/**
- * Created by Sarthak on 10/4/2019.
- */
+
 @Autonomous(name = "Odometry Auto")
 public class MyOdometryOpMode extends LinearOpMode {
+
     //Drive motors
     DcMotor right_front, right_back, left_front, left_back;
+
     //Odometry Wheels
     DcMotor verticalLeft, verticalRight, horizontal;
+
     public DcMotorEx brrr;
+
     public Servo shooterServo;
+
     public boolean isPressed = false;
+
     public long setTime = System.currentTimeMillis();
+
     private File valuesFile = AppUtil.getInstance().getSettingsFile("values.txt");
+
     double x;
     double y;
 
 
-    final double COUNTS_PER_INCH = 1892.37242833;
+    final double CPR = 1892.37242833;
 
 //    public static final double NEW_P = 2.0;
 //    public static final double NEW_I = 0.1;
 //    public static final double NEW_D = 0.2;
 //    public static final double NEW_F = 0;
 
-    //Hardware Map Names for drive motors and odometry wheels. THIS WILL CHANGE ON EACH ROBOT, YOU NEED TO UPDATE THESE VALUES ACCORDINGLY
+    //Hardware Map Names for drive motors and odometry wheels
     String rfName = "fright", rbName = "bright", lfName = "fleft", lbName = "bleft";
     String verticalLeftEncoderName = lfName, verticalRightEncoderName = rfName, horizontalEncoderName = lbName;
 
-    OdometryGlobalCoordinatePosition globalPositionUpdate;
+    OdometryCoordinatePosition globalPositionUpdate;
 
     OpenCvCamera webCam;
     SkystoneDeterminationPipeline pipeline;
@@ -94,7 +100,7 @@ public class MyOdometryOpMode extends LinearOpMode {
         setTime = System.currentTimeMillis();
 
         //Create and start GlobalCoordinatePosition thread to constantly update the global coordinate positions
-        globalPositionUpdate = new OdometryGlobalCoordinatePosition(verticalLeft, verticalRight, horizontal, COUNTS_PER_INCH, 75);
+        globalPositionUpdate = new OdometryCoordinatePosition(verticalLeft, verticalRight, horizontal, CPR, 75);
         Thread positionThread = new Thread(globalPositionUpdate);
         positionThread.start();
 
@@ -104,7 +110,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         String positionVal = pipeline.position.toString();
 
-        goToPosition(10*COUNTS_PER_INCH, 0*COUNTS_PER_INCH, 0.5, 90, 2*COUNTS_PER_INCH, 5, 1);
+        goToPosition(10*CPR, 0*CPR, 0.5, 90, 2*CPR, 5, 1);
 
 
 
@@ -126,7 +132,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 //                    telemetry.addData("y", y);
 //                    telemetry.update();
 //
-//                    goToPosition(x*COUNTS_PER_INCH, y*COUNTS_PER_INCH, 0.5, 0, 3*COUNTS_PER_INCH, 3);
+//                    goToPosition(x*CPR, y*CPR, 0.5, 0, 3*CPR, 3);
 //
 //                }
 //
@@ -148,8 +154,8 @@ public class MyOdometryOpMode extends LinearOpMode {
             sleep(50);
 
             //Display Global (x, y, theta) coordinates
-            telemetry.addData("X Position", globalPositionUpdate.returnXCoordinate() / COUNTS_PER_INCH);
-            telemetry.addData("Y Position", globalPositionUpdate.returnYCoordinate() / COUNTS_PER_INCH);
+            telemetry.addData("X Position", globalPositionUpdate.returnXCoordinate() / CPR);
+            telemetry.addData("Y Position", globalPositionUpdate.returnYCoordinate() / CPR);
             telemetry.addData("Orientation (Degrees)", globalPositionUpdate.returnOrientation());
 
             telemetry.addData("Vertical left encoder position", verticalLeft.getCurrentPosition());
