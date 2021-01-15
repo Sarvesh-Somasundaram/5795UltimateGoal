@@ -28,21 +28,20 @@ import java.io.File;
 @Autonomous(name = "Odometry Auto")
 public class MyOdometryOpMode extends LinearOpMode {
 
-    //Drive motors
-    DcMotor right_front, right_back, left_front, left_back;
-
-    //Odometry Wheels
-    DcMotor verticalLeft, verticalRight, horizontal;
+    //Drive motors and odometry wheels
+    public DcMotor backLeft, backRight, frontLeft, frontRight, verticalLeft, verticalRight, horizontal, intake, wobble;
 
     public DcMotorEx brrr;
 
-    public Servo shooterServo;
+    public Servo shooterServo, wobbleServo;
 
-    public boolean isPressed = false;
+    public boolean shoot = false;
 
     public long setTime = System.currentTimeMillis();
 
-    private File valuesFile = AppUtil.getInstance().getSettingsFile("values.txt");
+    private File path1 = AppUtil.getInstance().getSettingsFile("path1.txt");
+    private File path2 = AppUtil.getInstance().getSettingsFile("path2.txt");
+    private File path3 = AppUtil.getInstance().getSettingsFile("path3.txt");
 
     double x;
     double y;
@@ -50,35 +49,40 @@ public class MyOdometryOpMode extends LinearOpMode {
 
     final double CPR = 1892.37242833;
 
-//    public static final double NEW_P = 2.0;
-//    public static final double NEW_I = 0.1;
-//    public static final double NEW_D = 0.2;
-//    public static final double NEW_F = 0;
 
     //Hardware Map Names for drive motors and odometry wheels
-    String rfName = "fright", rbName = "bright", lfName = "fleft", lbName = "bleft";
-    String verticalLeftEncoderName = lfName, verticalRightEncoderName = rfName, horizontalEncoderName = lbName;
+    String frName = "fright", brName = "bright", flName = "fleft", blName = "bleft";
+    String verticalLeftEncoderName = flName, verticalRightEncoderName = frName, horizontalEncoderName = blName;
 
-    OdometryCoordinatePosition globalPositionUpdate;
+    OdometryCoordinatePosition positionUpdate;
 
     OpenCvCamera webCam;
-    SkystoneDeterminationPipeline pipeline;
+    DiskDeterminationPipeline pipeline;
 
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
+        brrr.setDirection(DcMotorSimple.Direction.REVERSE);
+
         shooterServo = hardwareMap.servo.get("brrrservo");
         shooterServo.setPosition(0.312);
 
+        intake = hardwareMap.dcMotor.get("intake");
+
+        wobble = hardwareMap.dcMotor.get("wobble");
+        wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        wobbleServo = hardwareMap.servo.get("wobbles");
+        wobbleServo.setPosition(0.47);
 
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webCam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
 
-        pipeline = new SkystoneDeterminationPipeline();
+        pipeline = new DiskDeterminationPipeline();
         webCam.setPipeline(pipeline);
 
         webCam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
@@ -90,8 +94,8 @@ public class MyOdometryOpMode extends LinearOpMode {
             }
         });
 
-        //Initialize hardware map values. PLEASE UPDATE THESE VALUES TO MATCH YOUR CONFIGURATION
-        initDriveHardwareMap(rfName, rbName, lfName, lbName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
+        //Initialize hardware map values
+        driveMotorMap(frName, brName, flName, blName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
 
         telemetry.addData("Status", "Init Complete");
         telemetry.update();
@@ -99,19 +103,43 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         setTime = System.currentTimeMillis();
 
-        //Create and start GlobalCoordinatePosition thread to constantly update the global coordinate positions
-        globalPositionUpdate = new OdometryCoordinatePosition(verticalLeft, verticalRight, horizontal, CPR, 75);
-        Thread positionThread = new Thread(globalPositionUpdate);
+        //Create and start OdometryCoordinatePosition thread to constantly update the coordinate positions
+        positionUpdate = new OdometryCoordinatePosition(verticalLeft, verticalRight, horizontal, CPR, 75);
+        Thread positionThread = new Thread(positionUpdate);
         positionThread.start();
+
+        // Reverse encoder values to face the correct direction
 
         verticalRight.setDirection(DcMotorSimple.Direction.REVERSE);
         verticalLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
+        // Determine what position the disk is in
         String positionVal = pipeline.position.toString();
 
+
+        //Movements start here
         goToPosition(10*CPR, 0*CPR, 0.5, 90, 2*CPR, 5, 1);
 
+
+//        brrr.setPower(0.73);
+//        goToPosition(0*CPR, -55*CPR, 0.5, 0, 1.5*CPR, 1, 0.4);
+//        sleep(500);
+//        goToPosition(4*CPR, -57*CPR, 0.5, 0, 1.5*CPR, 1, 0.5);
+//        sleep(200);
+//        shooterServo.setPosition(0.5);
+//        sleep(60);
+//        shooterServo.setPosition(0.312);
+//        goToPosition(8*CPR, -57*CPR, 0.5, 0, 1.5*CPR, 1, 0.5);
+//        sleep(500);
+//        shooterServo.setPosition(0.5);
+//        sleep(60);
+//        shooterServo.setPosition(0.312);
+//        goToPosition(14*CPR, -57*CPR, 0.5, 0, 1.5*CPR, 1, 0.5);
+//        sleep(500);
+//        shooterServo.setPosition(0.5);
+//        sleep(60);
+//        shooterServo.setPosition(0.312);
 
 
 //        try {
@@ -145,6 +173,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 //            e.printStackTrace();
 //        }
 
+
         while(opModeIsActive()){
 
             telemetry.addData("Analysis", pipeline.getAnalysis());
@@ -154,9 +183,9 @@ public class MyOdometryOpMode extends LinearOpMode {
             sleep(50);
 
             //Display Global (x, y, theta) coordinates
-            telemetry.addData("X Position", globalPositionUpdate.returnXCoordinate() / CPR);
-            telemetry.addData("Y Position", globalPositionUpdate.returnYCoordinate() / CPR);
-            telemetry.addData("Orientation (Degrees)", globalPositionUpdate.returnOrientation());
+            telemetry.addData("X Position", positionUpdate.returnXCoordinate() / CPR);
+            telemetry.addData("Y Position", positionUpdate.returnYCoordinate() / CPR);
+            telemetry.addData("Orientation (Degrees)", positionUpdate.returnOrientation());
 
             telemetry.addData("Vertical left encoder position", verticalLeft.getCurrentPosition());
             telemetry.addData("Vertical right encoder position", verticalRight.getCurrentPosition());
@@ -170,15 +199,14 @@ public class MyOdometryOpMode extends LinearOpMode {
         }
 
         //Stop the thread
-        globalPositionUpdate.stop();
+        positionUpdate.stop();
 
     }
 
-    public static class SkystoneDeterminationPipeline extends OpenCvPipeline
+    public static class DiskDeterminationPipeline extends OpenCvPipeline
     {
-        /*
-         * An enum to define the skystone position
-         */
+
+        // An enum to define ring positions
         public enum RingPosition
         {
             FOUR,
@@ -186,45 +214,38 @@ public class MyOdometryOpMode extends LinearOpMode {
             NONE
         }
 
-        /*
-         * Some color constants
-         */
+        // Define colors
         static final Scalar BLUE = new Scalar(0, 0, 255);
         static final Scalar GREEN = new Scalar(0, 255, 0);
 
-        /*
-         * The core values which define the location and size of the sample regions
-         */
-        static final Point REGION1_TOPLEFT_ANCHOR_POINT = new Point(190,170);
 
-        static final int REGION_WIDTH = 25;
-        static final int REGION_HEIGHT = 35;
+        // Values that define the size and location of detection box
+        static final Point TOPLEFT_ANCHOR_POINT = new Point(190,170);
 
-        final int FOUR_RING_THRESHOLD = 150;
-        final int ONE_RING_THRESHOLD = 135;
+        static final int WIDTH = 25;
+        static final int HEIGHT = 35;
 
-        Point region1_pointA = new Point(
-                REGION1_TOPLEFT_ANCHOR_POINT.x,
-                REGION1_TOPLEFT_ANCHOR_POINT.y);
-        Point region1_pointB = new Point(
-                REGION1_TOPLEFT_ANCHOR_POINT.x + REGION_WIDTH,
-                REGION1_TOPLEFT_ANCHOR_POINT.y + REGION_HEIGHT);
+        final int FOUR_RINGS = 150;
+        final int ONE_RING = 135;
 
-        /*
-         * Working variables
-         */
-        Mat region1_Cb;
+        Point pointA = new Point(
+                TOPLEFT_ANCHOR_POINT.x,
+                TOPLEFT_ANCHOR_POINT.y);
+
+        Point pointB = new Point(
+                TOPLEFT_ANCHOR_POINT.x + WIDTH,
+                TOPLEFT_ANCHOR_POINT.y + HEIGHT);
+
+        // Variables to perform calculation and decisions
+        Mat box_Cb;
         Mat YCrCb = new Mat();
         Mat Cb = new Mat();
         int avg1;
 
-        // Volatile since accessed by OpMode thread w/o synchronization
+        // Position value which is accessed by OpMode thread
         private volatile RingPosition position = RingPosition.FOUR;
 
-        /*
-         * This function takes the RGB frame, converts to YCrCb,
-         * and extracts the Cb channel to the 'Cb' variable
-         */
+        // COnverts YCrCb to Cb
         void inputToCb(Mat input)
         {
             Imgproc.cvtColor(input, YCrCb, Imgproc.COLOR_RGB2YCrCb);
@@ -236,51 +257,56 @@ public class MyOdometryOpMode extends LinearOpMode {
         {
             inputToCb(firstFrame);
 
-            region1_Cb = Cb.submat(new Rect(region1_pointA, region1_pointB));
+            box_Cb = Cb.submat(new Rect(pointA, pointB));
         }
 
+        // Processing the frame to evaluate number of rings
         @Override
         public Mat processFrame(Mat input)
         {
             inputToCb(input);
 
-            avg1 = (int) Core.mean(region1_Cb).val[0];
+            avg1 = (int) Core.mean(box_Cb).val[0];
 
+            // Draws rectangle on input camera frame using the points defined earlier, pointA and pointB
             Imgproc.rectangle(
-                    input, // Buffer to draw on
-                    region1_pointA, // First point which defines the rectangle
-                    region1_pointB, // Second point which defines the rectangle
-                    BLUE, // The color the rectangle is drawn in
-                    2); // Thickness of the rectangle lines
+                    input,
+                    pointA,
+                    pointB,
+                    BLUE,
+                    2);
 
-            position = RingPosition.FOUR; // Record our analysis
-            if(avg1 > FOUR_RING_THRESHOLD){
+            position = RingPosition.FOUR; // Record the analysis
+            if(avg1 > FOUR_RINGS){
                 position = RingPosition.FOUR;
-            }else if (avg1 > ONE_RING_THRESHOLD){
+            }else if (avg1 > ONE_RING){
                 position = RingPosition.ONE;
             }else{
                 position = RingPosition.NONE;
             }
 
+            // Another rectangle
             Imgproc.rectangle(
-                    input, // Buffer to draw on
-                    region1_pointA, // First point which defines the rectangle
-                    region1_pointB, // Second point which defines the rectangle
-                    GREEN, // The color the rectangle is drawn in
-                    -1); // Negative thickness means solid fill
+                    input,
+                    pointA,
+                    pointB,
+                    GREEN,
+                    -1); // Negative value here means infill
 
             return input;
         }
 
+        // Getter that returns the analysis
         public int getAnalysis()
         {
             return avg1;
         }
     }
 
+    // Custom function for quick firing three discs into high goal
     public void shoot()  {
 
-        while (isPressed) {
+        while (shoot) {
 
             brrr.setPower(-0.88);
 
@@ -331,70 +357,77 @@ public class MyOdometryOpMode extends LinearOpMode {
 
             shooterServo.setPosition(0.312);
 
-            isPressed = false;
-
             brrr.setPower(0);
+
+            shoot = false;
+
         }
     }
 
 
-    public void goToPosition(double targetXPos, double targetYPos, double robotPower, double desiredRobotOrientation, double allowableDistanceError, double allowableTurnError, double turnPower){
+    // Custom goToPosition function
+    public void goToPosition(double targetX, double targetY, double drivePow, double desiredOrientation, double distanceErr, double turnErr, double turnPow){
 
-        double distanceToXTarg = targetXPos - globalPositionUpdate.returnXCoordinate();
-        double distanceToYTarg = targetYPos - globalPositionUpdate.returnYCoordinate();
+        double distanceToTargX = targetX - positionUpdate.returnXCoordinate();
+        double distanceToTargY = targetY - positionUpdate.returnYCoordinate();
 
-        double pivotCorrection = desiredRobotOrientation - globalPositionUpdate.returnOrientation();
+        double pivotCorrection = desiredOrientation - positionUpdate.returnOrientation();
 
-        double distance = Math.hypot(distanceToXTarg, distanceToYTarg);
+        double distance = Math.hypot(distanceToTargX, distanceToTargY);
 
-        while (opModeIsActive() && (distance > allowableDistanceError || pivotCorrection > allowableTurnError)) {
+        while (opModeIsActive() && (distance > distanceErr || pivotCorrection > turnErr)) {
 
-            distanceToXTarg = targetXPos - globalPositionUpdate.returnXCoordinate();
-            distanceToYTarg = targetYPos - globalPositionUpdate.returnYCoordinate();
-            distance = Math.hypot(distanceToXTarg, distanceToYTarg);
+            distanceToTargX = targetX - positionUpdate.returnXCoordinate();
+            distanceToTargY = targetY - positionUpdate.returnYCoordinate();
+            distance = Math.hypot(distanceToTargX, distanceToTargY);
 
-            double robotAngle = Math.toDegrees(Math.atan2(distanceToXTarg, distanceToYTarg));
+            double robotAngle = Math.toDegrees(Math.atan2(distanceToTargX, distanceToTargY));
 
-            double robotMovementXComp = calculateX(robotAngle, robotPower);
-            double robotMovementYComp = calculateY(robotAngle, robotPower);
+            double movementXComponent = calculateX(robotAngle, drivePow);
+            double movementYComponent = calculateY(robotAngle, drivePow);
 
-            pivotCorrection = desiredRobotOrientation - globalPositionUpdate.returnOrientation();
+            pivotCorrection = desiredOrientation - positionUpdate.returnOrientation();
 
-            double robotTurn = Range.clip(Math.toRadians(pivotCorrection)/ Math.toRadians(30), -1, 1) * turnPower;
+            double robotTurn = Range.clip(Math.toRadians(pivotCorrection)/ Math.toRadians(30), -1, 1) * turnPow;
 
-
-            left_front.setPower(-robotMovementYComp - robotMovementXComp - robotTurn);
-            right_front.setPower(robotMovementYComp - robotMovementXComp - robotTurn);
-            left_back.setPower(robotMovementYComp - robotMovementXComp + robotTurn);
-            right_back.setPower(-robotMovementYComp - robotMovementXComp + robotTurn);
+            frontLeft.setPower(-movementYComponent - movementXComponent - robotTurn);
+            frontRight.setPower(movementYComponent - movementXComponent - robotTurn);
+            backLeft.setPower(movementYComponent - movementXComponent + robotTurn);
+            backRight.setPower(-movementYComponent - movementXComponent + robotTurn);
 
         }
 
-        left_front.setPower(0);
-        right_front.setPower(0);
-        left_back.setPower(0);
-        right_back.setPower(0);
+        frontLeft.setPower(0);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setPower(0);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setPower(0);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setPower(0);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    private void initDriveHardwareMap(String rfName, String rbName, String lfName, String lbName, String vlEncoderName, String vrEncoderName, String hEncoderName){
-        right_front = hardwareMap.dcMotor.get(rfName);
-        right_back = hardwareMap.dcMotor.get(rbName);
-        left_front = hardwareMap.dcMotor.get(lfName);
-        left_back = hardwareMap.dcMotor.get(lbName);
+    // Mapping the motors and encoders to hardware map
 
-        verticalLeft = hardwareMap.dcMotor.get(vlEncoderName);
-        verticalRight = hardwareMap.dcMotor.get(vrEncoderName);
+    private void driveMotorMap(String frName, String brName, String flName, String blName, String lEncoderName, String rEncoderName, String hEncoderName){
+        frontRight = hardwareMap.dcMotor.get(frName);
+        backRight = hardwareMap.dcMotor.get(brName);
+        frontLeft = hardwareMap.dcMotor.get(flName);
+        backLeft = hardwareMap.dcMotor.get(blName);
+
+        verticalLeft = hardwareMap.dcMotor.get(lEncoderName);
+        verticalRight = hardwareMap.dcMotor.get(rEncoderName);
         horizontal = hardwareMap.dcMotor.get(hEncoderName);
 
-        right_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        right_back.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left_front.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        left_back.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        right_front.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        right_back.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        left_front.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        left_back.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         verticalLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         verticalRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -405,35 +438,21 @@ public class MyOdometryOpMode extends LinearOpMode {
         horizontal.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
-        right_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        right_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        left_front.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        left_back.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-//        left_front.setDirection(DcMotorSimple.Direction.REVERSE);
-//        right_front.setDirection(DcMotorSimple.Direction.REVERSE);
-//        right_back.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         telemetry.addData("Status", "Hardware Map Init Complete");
         telemetry.update();
     }
 
-    /**
-     * Calculate the power in the x direction
-     * @param desiredAngle angle on the x axis
-     * @param speed robot's speed
-     * @return the x vector
-     */
+    // Calculating power in the X direction
     private double calculateX(double desiredAngle, double speed) {
         return Math.sin(Math.toRadians(desiredAngle)) * speed;
     }
 
-    /**
-     * Calculate the power in the y direction
-     * @param desiredAngle angle on the y axis
-     * @param speed robot's speed
-     * @return the y vector
-     */
+    // Calculating power in the Y direction
     private double calculateY(double desiredAngle, double speed) {
         return Math.cos(Math.toRadians(desiredAngle)) * speed;
     }

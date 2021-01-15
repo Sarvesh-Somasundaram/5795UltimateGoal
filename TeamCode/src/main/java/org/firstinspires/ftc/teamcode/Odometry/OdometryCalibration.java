@@ -12,30 +12,25 @@ import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 import java.io.File;
 
-/* Created by Sarthak on 6/1/2019.
-        * Odometry system calibration. Run this OpMode to generate the necessary constants to calculate the robot's global position on the field.
-        * The Global Positioning Algorithm will not function and will throw an error if this program is not run first
-        */
 
 @TeleOp(name = "Odometry System Calibration", group = "Calibration")
 public class OdometryCalibration extends LinearOpMode {
-    //Drive motors
-    DcMotor frontright, backright, frontleft, backleft;
-    //Odometry Wheels
-    DcMotor verticalLeft, verticalRight, horizontal;
+
+    //Drive motors and Odometry wheels
+    DcMotor backLeft, backRight, frontLeft, frontRight, verticalLeft, verticalRight, horizontal;
 
     //IMU Sensor
     BNO055IMU imu;
 
-    //Hardware Map Names for drive motors and odometry wheels. THIS WILL CHANGE ON EACH ROBOT, YOU NEED TO UPDATE THESE VALUES ACCORDINGLY
-    String rfName = "fright", rbName = "bright", lfName = "fleft", lbName = "bleft";
-    String verticalLeftEncoderName = lfName, verticalRightEncoderName = rfName, horizontalEncoderName = lbName;
+    //Hardware Map Names for drive motors and odometry wheels
+    String frName = "fright", brName = "bright", flName = "fleft", blName = "bleft";
+    String verticalLeftEncoderName = flName, verticalRightEncoderName = frName, horizontalEncoderName = blName;
 
     final double PIVOT_SPEED = 0.5;
 
-    //The amount of encoder ticks for each inch the robot moves. THIS WILL CHANGE FOR EACH ROBOT AND NEEDS TO BE UPDATED HERE
+    //The amount of encoder counts per inch the robot moves
     final double COUNTS_PER_INCH = 1892.37242833;
-//43.4670116429
+
     ElapsedTime timer = new ElapsedTime();
 
     double horizontalTickOffset = 0;
@@ -46,10 +41,10 @@ public class OdometryCalibration extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        //Initialize hardware map values. PLEASE UPDATE THESE VALUES TO MATCH YOUR CONFIGURATION
-        initHardwareMap(rfName, rbName, lfName, lbName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
+        //Initialize hardware map values
+        initHardwareMap(frName, brName, flName, blName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
 
-        //Initialize IMU hardware map value. PLEASE UPDATE THIS VALUE TO MATCH YOUR CONFIGURATION
+        //Initialize IMU hardware map value
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         //Initialize IMU parameters
@@ -64,22 +59,21 @@ public class OdometryCalibration extends LinearOpMode {
         telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
         telemetry.clear();
 
-        //Odometry System Calibration Init Complete
         telemetry.addData("Odometry System Calibration Status", "Init Complete");
         telemetry.update();
 
         waitForStart();
 
-        //Begin calibration (if robot is unable to pivot at these speeds, please adjust the constant at the top of the code
+        //Begin calibration
         while(getXAngle() < 90 && opModeIsActive()){
-            frontright.setPower(PIVOT_SPEED);
-            backright.setPower(PIVOT_SPEED);
-            frontleft.setPower(PIVOT_SPEED);
-            backleft.setPower(PIVOT_SPEED);
+            frontRight.setPower(PIVOT_SPEED);
+            backRight.setPower(PIVOT_SPEED);
+            frontLeft.setPower(PIVOT_SPEED);
+            backLeft.setPower(PIVOT_SPEED);
             if(getXAngle() < 60) {
-                setPowerAll(PIVOT_SPEED, PIVOT_SPEED, PIVOT_SPEED, PIVOT_SPEED);
+                setPowerMotors(PIVOT_SPEED, PIVOT_SPEED, PIVOT_SPEED, PIVOT_SPEED);
             }else{
-                setPowerAll(PIVOT_SPEED/3, PIVOT_SPEED/3, PIVOT_SPEED/3, PIVOT_SPEED/3);
+                setPowerMotors(PIVOT_SPEED/3, PIVOT_SPEED/3, PIVOT_SPEED/3, PIVOT_SPEED/3);
             }
 
             telemetry.addData("IMU Angle", getXAngle());
@@ -87,7 +81,7 @@ public class OdometryCalibration extends LinearOpMode {
         }
 
         //Stop the robot
-        setPowerAll(0, 0, 0, 0);
+        setPowerMotors(0, 0, 0, 0);
         timer.reset();
         while(timer.milliseconds() < 1000 && opModeIsActive()){
             telemetry.addData("IMU Angle", getXAngle());
@@ -97,11 +91,8 @@ public class OdometryCalibration extends LinearOpMode {
         //Record IMU and encoder values to calculate the constants for the global position algorithm
         double angle = getXAngle();
 
-        /*
-        Encoder Difference is calculated by the formula (leftEncoder - rightEncoder)
-        Since the left encoder is also mapped to a drive motor, the encoder value needs to be reversed with the negative sign in front
-        THIS MAY NEED TO BE CHANGED FOR EACH ROBOT
-       */
+
+        //Encoder Difference is calculated by the formula (leftEncoder - rightEncoder)
         double encoderDifference = Math.abs(verticalLeft.getCurrentPosition()) + (Math.abs(verticalRight.getCurrentPosition()));
 
         double verticalEncoderTickOffsetPerDegree = encoderDifference/angle;
@@ -133,24 +124,24 @@ public class OdometryCalibration extends LinearOpMode {
     }
 
     private void initHardwareMap(String rfName, String rbName, String lfName, String lbName, String vlEncoderName, String vrEncoderName, String hEncoderName){
-        frontright = hardwareMap.dcMotor.get(rfName);
-        backright = hardwareMap.dcMotor.get(rbName);
-        frontleft = hardwareMap.dcMotor.get(lfName);
-        backleft = hardwareMap.dcMotor.get(lbName);
+        frontRight = hardwareMap.dcMotor.get(rfName);
+        backRight = hardwareMap.dcMotor.get(rbName);
+        frontLeft = hardwareMap.dcMotor.get(lfName);
+        backLeft = hardwareMap.dcMotor.get(lbName);
 
         verticalLeft = hardwareMap.dcMotor.get(vlEncoderName);
         verticalRight = hardwareMap.dcMotor.get(vrEncoderName);
         horizontal = hardwareMap.dcMotor.get(hEncoderName);
 
-        frontright.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backright.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontleft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        backleft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        frontright.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backright.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontleft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        backleft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         verticalLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         verticalRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -161,41 +152,27 @@ public class OdometryCalibration extends LinearOpMode {
         horizontal.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
-        frontright.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backright.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontleft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backleft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-//        frontleft.setDirection(DcMotorSimple.Direction.REVERSE);
-//        frontright.setDirection(DcMotorSimple.Direction.REVERSE);
-//        backleft.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         telemetry.addData("Status", "Hardware Map Init Complete");
         telemetry.update();
 
     }
 
-    /**
-     * Gets the orientation of the robot using the REV IMU
-     * @return the angle of the robot
-     */
+    // Returns robot orientation angle
     private double getXAngle(){
         return (-imu.getAngularOrientation().firstAngle);
     }
 
-    /**
-     * Sets power to all four drive motors
-     * @param rf power for right front motor
-     * @param rb power for right back motor
-     * @param lf power for left front motor
-     * @param lb power for left back motor
-     */
-    private void setPowerAll(double rf, double rb, double lf, double lb){
-        frontright.setPower(rf);
-        backright.setPower(rb);
-        frontleft.setPower(lf);
-        backleft.setPower(lb);
+    // Sets power to all motors
+    private void setPowerMotors(double rf, double rb, double lf, double lb){
+        frontRight.setPower(rf);
+        backRight.setPower(rb);
+        frontLeft.setPower(lf);
+        backLeft.setPower(lb);
     }
 
 }

@@ -11,7 +11,7 @@ public class CoordinatePositionTest extends LinearOpMode {
     //Odometry encoder wheels
     DcMotor verticalRight, verticalLeft, horizontal;
 
-    //The amount of encoder ticks per inch
+    //The amount of encoder counts per inch
     final double CPR = 1892.37242833;
 
     @Override
