@@ -33,7 +33,6 @@ public class Robot extends OpMode {
 
     public boolean isPressed = false;
 
-    public final double COUNTS_PER_INCH = 43.4670116429;
     public Servo shooterServo, wobbleServo;
 
     public double power = 1;
@@ -43,7 +42,6 @@ public class Robot extends OpMode {
 
     public long setTime = System.currentTimeMillis();
     public long start = 0;
-    boolean hasRun = false;
 
     public void init() {
 
