@@ -90,14 +90,14 @@ public class OdometryTeleop extends OpMode {
         PIDFCoefficients pidModified = brrr.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
 
         if (gamepad1.left_bumper) {
-            frontLeft.setPower((-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) * .35);
-            frontRight.setPower((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) * .35);
+            frontLeft.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * .35);
+            frontRight.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * .35);
             backRight.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * .35);
             backLeft.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * .35);
         }
         else {
-            frontLeft.setPower(-gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x);
-            frontRight.setPower(gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x);
+            frontLeft.setPower(gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x);
+            frontRight.setPower(-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x);
             backRight.setPower(gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x);
             backLeft.setPower(-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x);
         }
@@ -106,6 +106,16 @@ public class OdometryTeleop extends OpMode {
         if (gamepad1.a) {
             isPressed = true;
             shoot();
+        }
+
+        else {
+        }
+
+        if (gamepad2.a) {
+            goToPosition(0 * CPR, 10 * CPR, 0.2, 0, 5 * CPR, 10, 0);
+        }
+
+        else {
         }
 
 
@@ -302,7 +312,7 @@ public class OdometryTeleop extends OpMode {
 
             pivotCorrection = desiredOrientation - positionUpdate.returnOrientation();
 
-            double robotTurn = Range.clip(Math.toRadians(pivotCorrection)/ Math.toRadians(30), -1, 1) * turnPow;
+            double robotTurn = Range.clip(Math.toRadians(pivotCorrection) / Math.toRadians(30), -1, 1) * turnPow;
 
             frontLeft.setPower(-movementYComponent - movementXComponent - robotTurn);
             frontRight.setPower(movementYComponent - movementXComponent - robotTurn);
@@ -319,6 +329,8 @@ public class OdometryTeleop extends OpMode {
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setPower(0);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        isPressed = false;
     }
 
     // Calculating power in the X direction
