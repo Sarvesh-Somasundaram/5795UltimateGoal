@@ -33,7 +33,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 
     public DcMotorEx brrr;
 
-    public Servo shooterServo, wobbleServo;
+    public Servo shooterServo, wobbleServo, dropServo;
 
     public boolean shoot = false;
 
@@ -77,6 +77,10 @@ public class MyOdometryOpMode extends LinearOpMode {
         wobbleServo = hardwareMap.servo.get("wobbles");
         wobbleServo.setPosition(0.47);
 
+        dropServo = hardwareMap.servo.get("drop");
+        dropServo.setPosition(0.45);
+
+
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webCam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -113,13 +117,32 @@ public class MyOdometryOpMode extends LinearOpMode {
         verticalRight.setDirection(DcMotorSimple.Direction.REVERSE);
         verticalLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
-
+        sleep(200);
         // Determine what position the disk is in
         String positionVal = pipeline.position.toString();
+        sleep(300);
 
+        if (positionVal.equals("FOUR")) {
 
-        //Movements start here
-        goToPosition(10*CPR, 0*CPR, 0.5, 90, 2*CPR, 5, 1);
+        }
+
+        else if (positionVal.equals("ONE")) {
+
+        }
+
+        else {
+
+            //Movements start here
+            goToPosition(0*CPR, 10*CPR, 0.5, 0, 2*CPR, 5, 0);
+
+            while(backRight.isBusy() && backLeft.isBusy() && frontRight.isBusy() && frontLeft.isBusy()) {
+
+                intake.setPower(1);
+            }
+            intake.setPower(0);
+
+        }
+
 
 
 //        brrr.setPower(0.73);
