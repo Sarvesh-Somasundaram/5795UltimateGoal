@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.Odometry;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -23,6 +25,8 @@ public class OdometryTeleop extends OpMode {
     public static final double NEW_I = 0.1;
     public static final double NEW_D = 0.2;
     public static final double NEW_F = 0;
+
+    BNO055IMU imu;
 
     public boolean isPressed = false;
 
@@ -73,6 +77,21 @@ public class OdometryTeleop extends OpMode {
         verticalRight.setDirection(DcMotorSimple.Direction.REVERSE);
         verticalLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        //Initialize IMU hardware map value
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+
+        //Initialize IMU parameters
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        imu.initialize(parameters);
+        telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
+        telemetry.clear();
+
         telemetry.addData("Status", "Init Complete");
         telemetry.update();
 
@@ -80,8 +99,6 @@ public class OdometryTeleop extends OpMode {
 
     public void loop() {
         setTime = System.currentTimeMillis();
-
-        PIDFCoefficients pidOrig = brrr.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // change coefficients using methods included with DcMotorEx class.
         PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
@@ -111,8 +128,15 @@ public class OdometryTeleop extends OpMode {
         else {
         }
 
-        if (gamepad2.a) {
-            goToPosition(0 * CPR, 10 * CPR, 0.2, 0, 5 * CPR, 10, 0);
+        if (gamepad1.b) {
+            isPressed = true;
+            while (isPressed) {
+                turn(0, 1, 0.3);
+                while(System.currentTimeMillis() - setTime < 300) {
+
+                }
+                goToPosition(0 * CPR, 0 * CPR, 0.4, 0, 2 * CPR, 1, 0);
+            }
         }
 
         else {
@@ -210,7 +234,7 @@ public class OdometryTeleop extends OpMode {
         //Display Global (x, y, theta) coordinates
         telemetry.addData("X Position", positionUpdate.returnXCoordinate() / CPR);
         telemetry.addData("Y Position", positionUpdate.returnYCoordinate() / CPR);
-        telemetry.addData("Orientation (Degrees)", positionUpdate.returnOrientation());
+        telemetry.addData("Orientation (Degrees)", getXAngle());
 
         telemetry.addData("Vertical left encoder position", verticalLeft.getCurrentPosition());
         telemetry.addData("Vertical right encoder position", verticalRight.getCurrentPosition());
@@ -223,10 +247,53 @@ public class OdometryTeleop extends OpMode {
 
         telemetry.update();
 
+    }
 
+    private double getXAngle(){
+        return (-imu.getAngularOrientation().firstAngle);
+    }
 
+    public void turn(double angle, double turnPow, double minTurnPow) {
+        double currentAngle = getXAngle();
 
+        double pivot = angle - currentAngle;
 
+        if (pivot < 0) {
+            minTurnPow = minTurnPow * -1;
+        }
+
+        while (Math.abs(pivot) > 2) {
+
+            currentAngle = getXAngle();
+            pivot = angle - currentAngle;
+
+            double turnPower = Range.clip(Math.toRadians(pivot) / Math.toRadians(180), -1, 1) * turnPow;
+
+            if (Math.abs(pivot) > 40) {
+                backLeft.setPower(turnPower);
+                frontLeft.setPower(-turnPower);
+                frontRight.setPower(-turnPower);
+                backRight.setPower(turnPower);
+            }
+            else {
+                backLeft.setPower(minTurnPow);
+                frontLeft.setPower(-minTurnPow);
+                frontRight.setPower(-minTurnPow);
+                backRight.setPower(minTurnPow);
+            }
+
+            telemetry.addData("Orientation", currentAngle);
+            telemetry.update();
+        }
+
+        frontLeft.setPower(0);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setPower(0);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setPower(0);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setPower(0);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
     }
 
@@ -299,7 +366,7 @@ public class OdometryTeleop extends OpMode {
 
         double distance = Math.hypot(distanceToTargX, distanceToTargY);
 
-        while (distance > distanceErr || pivotCorrection > turnErr) {
+        while (distance > distanceErr) {
 
             distanceToTargX = targetX - positionUpdate.returnXCoordinate();
             distanceToTargY = targetY - positionUpdate.returnYCoordinate();
