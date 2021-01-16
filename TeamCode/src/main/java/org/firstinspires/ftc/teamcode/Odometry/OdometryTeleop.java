@@ -132,7 +132,7 @@ public class OdometryTeleop extends OpMode {
             isPressed = true;
             while (isPressed) {
                 turn(0, 1, 0.3);
-                while(System.currentTimeMillis() - setTime < 300) {
+                while(System.currentTimeMillis() - setTime < 200) {
 
                 }
                 goToPosition(0 * CPR, 0 * CPR, 0.4, 0, 2 * CPR, 1, 0);

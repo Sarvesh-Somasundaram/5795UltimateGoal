@@ -21,6 +21,9 @@ import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+
 import java.io.File;
 
 
@@ -36,6 +39,9 @@ public class MyOdometryOpMode extends LinearOpMode {
     public Servo shooterServo, wobbleServo, dropServo;
 
     public boolean shoot = false;
+
+    BNO055IMU imu;
+
 
     public long setTime = System.currentTimeMillis();
 
@@ -64,7 +70,6 @@ public class MyOdometryOpMode extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
-        brrr.setDirection(DcMotorSimple.Direction.REVERSE);
 
         shooterServo = hardwareMap.servo.get("brrrservo");
         shooterServo.setPosition(0.312);
@@ -78,8 +83,21 @@ public class MyOdometryOpMode extends LinearOpMode {
         wobbleServo.setPosition(0.47);
 
         dropServo = hardwareMap.servo.get("drop");
-        dropServo.setPosition(0.45);
 
+        //Initialize IMU hardware map value
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+
+        //Initialize IMU parameters
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled      = true;
+        parameters.loggingTag          = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        imu.initialize(parameters);
+        telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
+        telemetry.clear();
 
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -117,12 +135,124 @@ public class MyOdometryOpMode extends LinearOpMode {
         verticalRight.setDirection(DcMotorSimple.Direction.REVERSE);
         verticalLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        sleep(200);
         // Determine what position the disk is in
         String positionVal = pipeline.position.toString();
         sleep(300);
 
         if (positionVal.equals("FOUR")) {
+            // THis is for turing while moving DONT DELETE
+//            goToPosition(10*CPR, 10*CPR, 0.5, 100, 3*CPR, 10, 0.5);
+
+            // Strafe to avoid crashig ito discs
+
+
+            // Movement starts here
+
+            brrr.setPower(0.69);
+            goToPosition(0*CPR, -54*CPR, 0.5, 0, 2*CPR, 5, 1);
+//            dropServo.setPosition(0.45);
+            sleep(200);
+            turn(-8, 0.5, 0.26);
+            sleep(300);
+            singleShot();
+            sleep(300);
+            turn(-12, 0.5, 0.26);
+            sleep(300);
+            singleShot();
+            sleep(300);
+            turn(-17, 0.5, 0.26);
+            sleep(300);
+            singleShot();
+            brrr.setPower(0);
+            turn(0, 0.5, 0.26);
+            sleep(2000);
+            goToPosition(-20*CPR, -56*CPR, 0.5, 0, 3*CPR, 5, 0);
+            sleep(200);
+
+            turn(179, 0.7, 0.5);
+//
+            wobble.setTargetPosition(425);
+            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            wobble.setPower(0.3);
+
+            while(wobble.isBusy()) {
+            }
+
+            wobble.setPower(0);
+            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            sleep(200);
+            wobbleServo.setPosition(0);
+
+
+            wobble.setTargetPosition(-425);
+            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            wobble.setPower(0.3);
+
+            while(wobble.isBusy()) {
+            }
+
+            wobble.setPower(0);
+            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            turn(-3, 0.7, 0.3);
+
+
+//            go to second wobble
+            goToPosition(-20*CPR, -35*CPR, 0.5, 0, 2*CPR, 1, 0);
+
+            sleep(60);
+
+            wobbleServo.setPosition(0.47);
+
+            wobble.setTargetPosition(-425);
+            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            wobble.setPower(0.3);
+
+            while(wobble.isBusy()) {
+            }
+
+            wobble.setPower(0);
+            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//
+////            reverse to box maybe turn at the same time???
+////            goToPosition();
+//
+////            else if not possible then turn here
+////            turn();
+//
+//            wobble.setTargetPosition(425);
+//            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            wobble.setPower(0.3);
+//
+//            while(wobble.isBusy()) {
+//            }
+//            wobbleServo.setPosition(0);
+//
+//            wobble.setPower(0);
+//            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//
+//            sleep(80);
+//
+//            wobble.setTargetPosition(-425);
+//            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            wobble.setPower(0.3);
+//
+//            while(wobble.isBusy()) {
+//            }
+//
+//            wobble.setPower(0);
+//            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//
+////            go to wall edge or corner depending on what we wanna do
+////            goToPosition();
+//
+
 
         }
 
@@ -132,22 +262,9 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         else {
 
-            //Movements start here
-            goToPosition(0*CPR, 10*CPR, 0.5, 0, 2*CPR, 5, 0);
-
-            while(backRight.isBusy() && backLeft.isBusy() && frontRight.isBusy() && frontLeft.isBusy()) {
-
-                intake.setPower(1);
-            }
-            intake.setPower(0);
 
         }
 
-
-
-//        brrr.setPower(0.73);
-//        goToPosition(0*CPR, -55*CPR, 0.5, 0, 1.5*CPR, 1, 0.4);
-//        sleep(500);
 //        goToPosition(4*CPR, -57*CPR, 0.5, 0, 1.5*CPR, 1, 0.5);
 //        sleep(200);
 //        shooterServo.setPosition(0.5);
@@ -208,7 +325,9 @@ public class MyOdometryOpMode extends LinearOpMode {
             //Display Global (x, y, theta) coordinates
             telemetry.addData("X Position", positionUpdate.returnXCoordinate() / CPR);
             telemetry.addData("Y Position", positionUpdate.returnYCoordinate() / CPR);
-            telemetry.addData("Orientation (Degrees)", positionUpdate.returnOrientation());
+            telemetry.addData("Orientation (Odometry)", positionUpdate.returnOrientation());
+            telemetry.addData("Orientation (IMU)", getXAngle());
+
 
             telemetry.addData("Vertical left encoder position", verticalLeft.getCurrentPosition());
             telemetry.addData("Vertical right encoder position", verticalRight.getCurrentPosition());
@@ -326,6 +445,61 @@ public class MyOdometryOpMode extends LinearOpMode {
         }
     }
 
+    
+    public void turn(double angle, double turnPow, double minTurnPow) {
+        double currentAngle = getXAngle();
+
+        double pivot = angle - currentAngle;
+
+        if (pivot < 0) {
+            minTurnPow = minTurnPow * -1;
+        }
+
+        while (Math.abs(pivot) > 1) {
+
+            currentAngle = getXAngle();
+            pivot = angle - currentAngle;
+
+            double turnPower = Range.clip(Math.toRadians(pivot) / Math.toRadians(180), -1, 1) * turnPow;
+
+            if (Math.abs(pivot) > 50) {
+                backLeft.setPower(turnPower);
+                frontLeft.setPower(-turnPower);
+                frontRight.setPower(-turnPower);
+                backRight.setPower(turnPower);
+            }
+            else {
+                backLeft.setPower(minTurnPow);
+                frontLeft.setPower(-minTurnPow);
+                frontRight.setPower(-minTurnPow);
+                backRight.setPower(minTurnPow);
+            }
+
+            telemetry.addData("Orientation", currentAngle);
+            telemetry.update();
+        }
+
+        frontLeft.setPower(0);
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setPower(0);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setPower(0);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setPower(0);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+    }
+
+
+    public void singleShot() {
+
+        shooterServo.setPosition(0.5);
+        sleep(60);
+        shooterServo.setPosition(0.312);
+
+    }
+
+
     // Custom function for quick firing three discs into high goal
     public void shoot()  {
 
@@ -398,7 +572,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         double distance = Math.hypot(distanceToTargX, distanceToTargY);
 
-        while (opModeIsActive() && (distance > distanceErr || pivotCorrection > turnErr)) {
+        while (opModeIsActive() && (distance > distanceErr || Math.abs(pivotCorrection) > turnErr)) {
 
             distanceToTargX = targetX - positionUpdate.returnXCoordinate();
             distanceToTargY = targetY - positionUpdate.returnYCoordinate();
@@ -411,12 +585,19 @@ public class MyOdometryOpMode extends LinearOpMode {
 
             pivotCorrection = desiredOrientation - positionUpdate.returnOrientation();
 
-            double robotTurn = Range.clip(Math.toRadians(pivotCorrection)/ Math.toRadians(30), -1, 1) * turnPow;
+            double robotTurn = Range.clip(Math.toRadians(pivotCorrection)/ Math.toRadians(180), -1, 1) * turnPow;
 
             frontLeft.setPower(-movementYComponent - movementXComponent - robotTurn);
             frontRight.setPower(movementYComponent - movementXComponent - robotTurn);
             backLeft.setPower(movementYComponent - movementXComponent + robotTurn);
             backRight.setPower(-movementYComponent - movementXComponent + robotTurn);
+
+            //Display Global (x, y, theta) coordinates
+            telemetry.addData("X Position", positionUpdate.returnXCoordinate() / CPR);
+            telemetry.addData("Y Position", positionUpdate.returnYCoordinate() / CPR);
+            telemetry.addData("Orientation (Odometry)", positionUpdate.returnOrientation());
+            telemetry.addData("Orientation (IMU)", getXAngle());
+            telemetry.update();
 
         }
 
@@ -480,5 +661,7 @@ public class MyOdometryOpMode extends LinearOpMode {
         return Math.cos(Math.toRadians(desiredAngle)) * speed;
     }
 
-
+    private double getXAngle(){
+        return (-imu.getAngularOrientation().firstAngle);
+    }
 }
