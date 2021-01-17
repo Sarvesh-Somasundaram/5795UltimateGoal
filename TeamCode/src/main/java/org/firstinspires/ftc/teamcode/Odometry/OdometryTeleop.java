@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -21,10 +22,10 @@ public class OdometryTeleop extends OpMode {
     public DcMotor backLeft, backRight, frontLeft, frontRight, verticalLeft, verticalRight, horizontal, intake, wobble;
     public DcMotorEx brrr;
 
-    public static final double NEW_P = 2.0;
-    public static final double NEW_I = 0.1;
-    public static final double NEW_D = 0.2;
-    public static final double NEW_F = 0;
+    public static final double NEW_P = 10.0;
+    public static final double NEW_I = 3;
+    public static final double NEW_D = 0;
+    public static final double NEW_F = 12;
 
     BNO055IMU imu;
 
@@ -54,6 +55,11 @@ public class OdometryTeleop extends OpMode {
 
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
         brrr.setDirection(DcMotorSimple.Direction.REVERSE);
+        brrr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        brrr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        // change coefficients using methods included with DcMotorEx class.
+        PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F, MotorControlAlgorithm.PIDF);
+        brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
 
         shooterServo = hardwareMap.servo.get("brrrservo");
         shooterServo.setPosition(0.312);
@@ -100,12 +106,6 @@ public class OdometryTeleop extends OpMode {
     public void loop() {
         setTime = System.currentTimeMillis();
 
-        // change coefficients using methods included with DcMotorEx class.
-        PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F);
-        brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
-
-        PIDFCoefficients pidModified = brrr.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-
         if (gamepad1.left_bumper) {
             frontLeft.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * .35);
             frontRight.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * .35);
@@ -135,7 +135,9 @@ public class OdometryTeleop extends OpMode {
                 while(System.currentTimeMillis() - setTime < 200) {
 
                 }
-                goToPosition(0 * CPR, 0 * CPR, 0.4, 0, 2 * CPR, 1, 0);
+                goToPosition(0 * CPR, 0 * CPR, 0.4, 0, 2 * CPR, 360, 0);
+                turn(180, 1, 0.34);
+                isPressed = false;
             }
         }
 
@@ -175,6 +177,10 @@ public class OdometryTeleop extends OpMode {
 
             if (wobbleServo.getPosition() < 0.1) {
                 wobbleServo.setPosition(0.47);
+
+                while(System.currentTimeMillis()-setTime < 300){
+
+                }
 
                 wobble.setTargetPosition(-425);
                 wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -396,8 +402,6 @@ public class OdometryTeleop extends OpMode {
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setPower(0);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        isPressed = false;
     }
 
     // Calculating power in the X direction

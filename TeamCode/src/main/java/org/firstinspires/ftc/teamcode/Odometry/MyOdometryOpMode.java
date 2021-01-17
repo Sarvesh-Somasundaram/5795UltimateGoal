@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
@@ -42,6 +44,11 @@ public class MyOdometryOpMode extends LinearOpMode {
 
     BNO055IMU imu;
 
+    public static final double NEW_P = 10.0;
+    public static final double NEW_I = 3;
+    public static final double NEW_D = 0;
+    public static final double NEW_F = 12;
+
 
     public long setTime = System.currentTimeMillis();
 
@@ -70,6 +77,12 @@ public class MyOdometryOpMode extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
+        brrr.setDirection(DcMotorSimple.Direction.REVERSE);
+        brrr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        brrr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        // change coefficients using methods included with DcMotorEx class.
+        PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F, MotorControlAlgorithm.PIDF);
+        brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
 
         shooterServo = hardwareMap.servo.get("brrrservo");
         shooterServo.setPosition(0.312);
@@ -143,117 +156,49 @@ public class MyOdometryOpMode extends LinearOpMode {
             // THis is for turing while moving DONT DELETE
 //            goToPosition(10*CPR, 10*CPR, 0.5, 100, 3*CPR, 10, 0.5);
 
-            // Strafe to avoid crashig ito discs
-
-
             // Movement starts here
-
-            brrr.setPower(0.69);
+            brrr.setPower(-0.674);
             goToPosition(0*CPR, -54*CPR, 0.5, 0, 2*CPR, 5, 1);
-//            dropServo.setPosition(0.45);
-            sleep(200);
+            dropServo.setPosition(0.45);
+            sleep(250);
             turn(-8, 0.5, 0.26);
-            sleep(300);
+            sleep(380);
             singleShot();
-            sleep(300);
-            turn(-12, 0.5, 0.26);
-            sleep(300);
+            sleep(340);
+            turn(-14, 0.5, 0.26);
+            sleep(380);
             singleShot();
-            sleep(300);
-            turn(-17, 0.5, 0.26);
-            sleep(300);
+            sleep(320);
+            turn(-20, 0.5, 0.26);
+            sleep(390);
             singleShot();
             brrr.setPower(0);
             turn(0, 0.5, 0.26);
-            sleep(2000);
+            sleep(500);
             goToPosition(-20*CPR, -56*CPR, 0.5, 0, 3*CPR, 5, 0);
             sleep(200);
-
             turn(179, 0.7, 0.5);
-//
-            wobble.setTargetPosition(425);
-            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            wobble.setPower(0.3);
-
-            while(wobble.isBusy()) {
-            }
-
-            wobble.setPower(0);
-            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-            sleep(200);
+            wobbleDown();
+            sleep(100);
             wobbleServo.setPosition(0);
-
-
-            wobble.setTargetPosition(-425);
-            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            wobble.setPower(0.3);
-
-            while(wobble.isBusy()) {
-            }
-
-            wobble.setPower(0);
-            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-            turn(-3, 0.7, 0.3);
-
-
-//            go to second wobble
-            goToPosition(-20*CPR, -35*CPR, 0.5, 0, 2*CPR, 1, 0);
-
+            wobbleUp();
+            turn(1.5, 0.7, 0.5);
+            wobbleDown();
+            wobbleServo.setPosition(0);
+            goToPosition(-20*CPR, -28*CPR, 0.5, 360, 5*CPR, 30, 0);
             sleep(60);
-
+            wobbleServo.setPosition(0.475);
+            sleep(250);
+            wobbleUp();
+            goToPosition(-20*CPR, -50*CPR, 0.5, 360, 3*CPR, 30, 0);
+            turn(179, 0.7, 0.5);
+            wobbleDown();
+            sleep(100);
+            wobbleServo.setPosition(0);
+            sleep(80);
+            wobbleUp();
             wobbleServo.setPosition(0.47);
-
-            wobble.setTargetPosition(-425);
-            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            wobble.setPower(0.3);
-
-            while(wobble.isBusy()) {
-            }
-
-            wobble.setPower(0);
-            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//
-////            reverse to box maybe turn at the same time???
-////            goToPosition();
-//
-////            else if not possible then turn here
-////            turn();
-//
-//            wobble.setTargetPosition(425);
-//            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//            wobble.setPower(0.3);
-//
-//            while(wobble.isBusy()) {
-//            }
-//            wobbleServo.setPosition(0);
-//
-//            wobble.setPower(0);
-//            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//
-//            sleep(80);
-//
-//            wobble.setTargetPosition(-425);
-//            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//            wobble.setPower(0.3);
-//
-//            while(wobble.isBusy()) {
-//            }
-//
-//            wobble.setPower(0);
-//            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-//            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//
-////            go to wall edge or corner depending on what we wanna do
-////            goToPosition();
-//
-
-
+            goToPosition(10*CPR, -70*CPR, 0.6, 360, 5*CPR, 30, 0);
         }
 
         else if (positionVal.equals("ONE")) {
@@ -265,21 +210,6 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         }
 
-//        goToPosition(4*CPR, -57*CPR, 0.5, 0, 1.5*CPR, 1, 0.5);
-//        sleep(200);
-//        shooterServo.setPosition(0.5);
-//        sleep(60);
-//        shooterServo.setPosition(0.312);
-//        goToPosition(8*CPR, -57*CPR, 0.5, 0, 1.5*CPR, 1, 0.5);
-//        sleep(500);
-//        shooterServo.setPosition(0.5);
-//        sleep(60);
-//        shooterServo.setPosition(0.312);
-//        goToPosition(14*CPR, -57*CPR, 0.5, 0, 1.5*CPR, 1, 0.5);
-//        sleep(500);
-//        shooterServo.setPosition(0.5);
-//        sleep(60);
-//        shooterServo.setPosition(0.312);
 
 
 //        try {
@@ -343,6 +273,34 @@ public class MyOdometryOpMode extends LinearOpMode {
         //Stop the thread
         positionUpdate.stop();
 
+    }
+
+    public void wobbleUp() {
+
+        wobble.setTargetPosition(-425);
+        wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        wobble.setPower(0.3);
+
+        while(wobble.isBusy()) {
+        }
+
+        wobble.setPower(0);
+        wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+    }
+
+    public void wobbleDown() {
+        wobble.setTargetPosition(425);
+        wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        wobble.setPower(0.3);
+
+        while(wobble.isBusy()) {
+        }
+
+        wobble.setPower(0);
+        wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public static class DiskDeterminationPipeline extends OpenCvPipeline
