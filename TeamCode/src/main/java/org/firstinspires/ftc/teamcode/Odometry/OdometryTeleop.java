@@ -135,7 +135,7 @@ public class OdometryTeleop extends OpMode {
                 while(System.currentTimeMillis() - setTime < 200) {
 
                 }
-                goToPosition(0 * CPR, 0 * CPR, 0.4, 0, 2 * CPR, 360, 0);
+                goToPosition(-20 * CPR, 60 * CPR, 0.4, 0, 2 * CPR, 360, 0);
                 turn(180, 1, 0.34);
                 isPressed = false;
             }
@@ -146,7 +146,7 @@ public class OdometryTeleop extends OpMode {
 
 
         if (gamepad1.left_trigger > 0) {
-            intake.setPower(-1);
+            intake.setPower(-1.5);
         }
         else if (gamepad1.right_trigger > 0) {
             intake.setPower(gamepad1.right_trigger);

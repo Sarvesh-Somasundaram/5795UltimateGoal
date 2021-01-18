@@ -78,11 +78,11 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
         brrr.setDirection(DcMotorSimple.Direction.REVERSE);
-        brrr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        brrr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        // change coefficients using methods included with DcMotorEx class.
-        PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F, MotorControlAlgorithm.PIDF);
-        brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
+//        brrr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        brrr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+//        // change coefficients using methods included with DcMotorEx class.
+//        PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F, MotorControlAlgorithm.PIDF);
+//        brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
 
         shooterServo = hardwareMap.servo.get("brrrservo");
         shooterServo.setPosition(0.312);
@@ -125,18 +125,24 @@ public class MyOdometryOpMode extends LinearOpMode {
             @Override
             public void onOpened()
             {
-                webCam.startStreaming(320,240, OpenCvCameraRotation.UPSIDE_DOWN);
+                webCam.startStreaming(320,240, OpenCvCameraRotation.UPRIGHT);
             }
         });
 
         //Initialize hardware map values
         driveMotorMap(frName, brName, flName, blName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
 
+
         telemetry.addData("Status", "Init Complete");
         telemetry.update();
         waitForStart();
 
         setTime = System.currentTimeMillis();
+
+        // Determine what position the disk is in
+        sleep(500);
+        String positionVal = pipeline.position.toString();
+
 
         //Create and start OdometryCoordinatePosition thread to constantly update the coordinate positions
         positionUpdate = new OdometryCoordinatePosition(verticalLeft, verticalRight, horizontal, CPR, 75);
@@ -148,57 +154,13 @@ public class MyOdometryOpMode extends LinearOpMode {
         verticalRight.setDirection(DcMotorSimple.Direction.REVERSE);
         verticalLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        // Determine what position the disk is in
-        String positionVal = pipeline.position.toString();
-        sleep(300);
+
 
         if (positionVal.equals("FOUR")) {
             // THis is for turing while moving DONT DELETE
 //            goToPosition(10*CPR, 10*CPR, 0.5, 100, 3*CPR, 10, 0.5);
 
-            // Movement starts here
-            brrr.setPower(-0.674);
-            goToPosition(0*CPR, -54*CPR, 0.5, 0, 2*CPR, 5, 1);
-            dropServo.setPosition(0.45);
-            sleep(250);
-            turn(-8, 0.5, 0.26);
-            sleep(380);
-            singleShot();
-            sleep(340);
-            turn(-14, 0.5, 0.26);
-            sleep(380);
-            singleShot();
-            sleep(320);
-            turn(-20, 0.5, 0.26);
-            sleep(390);
-            singleShot();
-            brrr.setPower(0);
-            turn(0, 0.5, 0.26);
-            sleep(500);
-            goToPosition(-20*CPR, -56*CPR, 0.5, 0, 3*CPR, 5, 0);
-            sleep(200);
-            turn(179, 0.7, 0.5);
-            wobbleDown();
-            sleep(100);
-            wobbleServo.setPosition(0);
-            wobbleUp();
-            turn(1.5, 0.7, 0.5);
-            wobbleDown();
-            wobbleServo.setPosition(0);
-            goToPosition(-20*CPR, -28*CPR, 0.5, 360, 5*CPR, 30, 0);
-            sleep(60);
-            wobbleServo.setPosition(0.475);
-            sleep(250);
-            wobbleUp();
-            goToPosition(-20*CPR, -50*CPR, 0.5, 360, 3*CPR, 30, 0);
-            turn(179, 0.7, 0.5);
-            wobbleDown();
-            sleep(100);
-            wobbleServo.setPosition(0);
-            sleep(80);
-            wobbleUp();
-            wobbleServo.setPosition(0.47);
-            goToPosition(10*CPR, -70*CPR, 0.6, 360, 5*CPR, 30, 0);
+
         }
 
         else if (positionVal.equals("ONE")) {
@@ -207,41 +169,62 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         else {
 
+            // Movement starts here
+            goToPosition(0*CPR, -53*CPR, 0.5, 0, 2*CPR, 1, 1);
+//            dropServo.setPosition(0.45);
+            brrr.setPower(-0.69);
+            sleep(250);
+            turn(-7, 0.5, 0.26);
+            sleep(820);
+            singleShot();
+            turn(-12.5, 0.5, 0.26);
+            sleep(825);
+            singleShot();
+            turn(-19, 0.5, 0.26);
+            sleep(800);
+            singleShot();
+            brrr.setPower(0);
+            turn(0, 0.5, 0.26);
+            goToPosition(-20*CPR, -53*CPR, 0.5, 0, 3*CPR, 360, 0);
+            sleep(200);
+            turn(178, 0.8, 0.4);
+            wobbleDown();
+            sleep(100);
+            wobbleServo.setPosition(0);
+            wobbleUp(0.3);
+            turn(-6, 0.7, 0.5);
+            wobbleDown();
+            wobbleServo.setPosition(0);
+            goToPosition(-20*CPR, -27*CPR, 0.425, 360, 5*CPR, 360, 0);
+            sleep(250);
+            wobbleServo.setPosition(0.475);
+            sleep(250);
+            wobbleUp(0.3);
+            sleep(170);
+            goToPosition(-20*CPR, -50*CPR, 0.5, 360, 3*CPR, 360, 0);
+            turn(178, 0.7, 0.5);
+            wobbleDown();
+            sleep(100);
+            wobbleServo.setPosition(0);
+            sleep(80);
+            wobbleUp(0.2);
+            wobbleServo.setPosition(0.47);
+
+            setTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - setTime < 1800) {
+                setPowerAll();
+            }
+
+            frontLeft.setPower(0);
+            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            frontRight.setPower(0);
+            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backLeft.setPower(0);
+            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backRight.setPower(0);
+            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         }
-
-
-
-//        try {
-//            Scanner scanner = new Scanner(valuesFile);
-//            while (scanner.hasNextLine()) {
-//
-//                String first_xy = scanner.nextLine();
-//                if (first_xy.equals("EOF")) {
-//                    break;
-//                }
-//
-//                else {
-//                    String[] xy = first_xy.split(",");
-//                    x = Double.parseDouble(xy[0]);
-//                    y = Double.parseDouble(xy[1]);
-//
-//                    telemetry.addData("x", x);
-//                    telemetry.addData("y", y);
-//                    telemetry.update();
-//
-//                    goToPosition(x*CPR, y*CPR, 0.5, 0, 3*CPR, 3);
-//
-//                }
-//
-//                sleep(300);
-//
-//
-//            }
-//            scanner.close();
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        }
 
 
         while(opModeIsActive()){
@@ -275,11 +258,11 @@ public class MyOdometryOpMode extends LinearOpMode {
 
     }
 
-    public void wobbleUp() {
+    public void wobbleUp(double power) {
 
         wobble.setTargetPosition(-425);
         wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        wobble.setPower(0.3);
+        wobble.setPower(power);
 
         while(wobble.isBusy()) {
         }
@@ -287,6 +270,13 @@ public class MyOdometryOpMode extends LinearOpMode {
         wobble.setPower(0);
         wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+    }
+    public void setPowerAll () {
+        backLeft.setPower(-0.7);
+        frontLeft.setPower(0.7);
+        frontRight.setPower(-0.6);
+        backRight.setPower(0.6);
 
     }
 
@@ -320,7 +310,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 
 
         // Values that define the size and location of detection box
-        static final Point TOPLEFT_ANCHOR_POINT = new Point(190,170);
+        static final Point TOPLEFT_ANCHOR_POINT = new Point(190,179);
 
         static final int WIDTH = 25;
         static final int HEIGHT = 35;
