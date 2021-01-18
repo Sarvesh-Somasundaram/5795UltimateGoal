@@ -171,7 +171,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 
             // Movement starts here
             goToPosition(0*CPR, -53*CPR, 0.5, 0, 2*CPR, 1, 1);
-//            dropServo.setPosition(0.45);
+            dropServo.setPosition(0.45);
             brrr.setPower(-0.69);
             sleep(250);
             turn(-7, 0.5, 0.26);
