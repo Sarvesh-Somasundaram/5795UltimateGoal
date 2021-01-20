@@ -44,10 +44,10 @@ public class MyOdometryOpMode extends LinearOpMode {
 
     BNO055IMU imu;
 
-    public static final double NEW_P = 10.0;
-    public static final double NEW_I = 3;
-    public static final double NEW_D = 0;
-    public static final double NEW_F = 12;
+    public static final double NEW_P = 9.6;
+    public static final double NEW_I = 0.0;
+    public static final double NEW_D = 0.0;
+    public static final double NEW_F = 12.0;
 
 
     public long setTime = System.currentTimeMillis();
@@ -78,11 +78,10 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
         brrr.setDirection(DcMotorSimple.Direction.REVERSE);
-//        brrr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        brrr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-//        // change coefficients using methods included with DcMotorEx class.
-//        PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F, MotorControlAlgorithm.PIDF);
-//        brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
+        brrr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // change coefficients using methods included with DcMotorEx class.
+        PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F, MotorControlAlgorithm.PIDF);
+        brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
 
         shooterServo = hardwareMap.servo.get("brrrservo");
         shooterServo.setPosition(0.312);
@@ -171,28 +170,31 @@ public class MyOdometryOpMode extends LinearOpMode {
 
             // Movement starts here
             goToPosition(0*CPR, -53*CPR, 0.5, 0, 2*CPR, 1, 1);
-            dropServo.setPosition(0.45);
-            brrr.setPower(-0.69);
+//            dropServo.setPosition(0.45);
+            brrr.setPower(-0.765);
             sleep(250);
-            turn(-7, 0.5, 0.26);
-            sleep(820);
+            turn(-6, 0.4, 0.26, -0.765);
+            sleep(500);
+            brrr.setPower(-0.765);
             singleShot();
-            turn(-12.5, 0.5, 0.26);
-            sleep(825);
+            turn(-12, 0.4, 0.26, -0.765);
+            sleep(500);
+            brrr.setPower(-0.765);
             singleShot();
-            turn(-19, 0.5, 0.26);
-            sleep(800);
+            turn(-16, 0.4, 0.26, -0.765);
+            sleep(500);
+            brrr.setPower(-0.765);
             singleShot();
             brrr.setPower(0);
-            turn(0, 0.5, 0.26);
+            turn(0, 0.5, 0.26, 0);
             goToPosition(-20*CPR, -53*CPR, 0.5, 0, 3*CPR, 360, 0);
             sleep(200);
-            turn(178, 0.8, 0.4);
+            turn(178, 0.8, 0.4, 0);
             wobbleDown();
             sleep(100);
             wobbleServo.setPosition(0);
             wobbleUp(0.3);
-            turn(-6, 0.7, 0.5);
+            turn(-6, 0.7, 0.5, 0);
             wobbleDown();
             wobbleServo.setPosition(0);
             goToPosition(-20*CPR, -27*CPR, 0.425, 360, 5*CPR, 360, 0);
@@ -202,7 +204,7 @@ public class MyOdometryOpMode extends LinearOpMode {
             wobbleUp(0.3);
             sleep(170);
             goToPosition(-20*CPR, -50*CPR, 0.5, 360, 3*CPR, 360, 0);
-            turn(178, 0.7, 0.5);
+            turn(178, 0.7, 0.5, 0);
             wobbleDown();
             sleep(100);
             wobbleServo.setPosition(0);
@@ -394,7 +396,7 @@ public class MyOdometryOpMode extends LinearOpMode {
     }
 
     
-    public void turn(double angle, double turnPow, double minTurnPow) {
+    public void turn(double angle, double turnPow, double minTurnPow, double brrrpower) {
         double currentAngle = getXAngle();
 
         double pivot = angle - currentAngle;
@@ -403,7 +405,10 @@ public class MyOdometryOpMode extends LinearOpMode {
             minTurnPow = minTurnPow * -1;
         }
 
+        brrr.setPower(brrrpower);
+
         while (Math.abs(pivot) > 1) {
+            brrr.setPower(brrrpower);
 
             currentAngle = getXAngle();
             pivot = angle - currentAngle;
@@ -426,6 +431,8 @@ public class MyOdometryOpMode extends LinearOpMode {
             telemetry.addData("Orientation", currentAngle);
             telemetry.update();
         }
+
+        brrr.setPower(brrrpower);
 
         frontLeft.setPower(0);
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

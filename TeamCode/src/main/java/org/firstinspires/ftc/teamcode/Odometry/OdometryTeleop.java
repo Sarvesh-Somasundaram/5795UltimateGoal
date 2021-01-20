@@ -12,20 +12,16 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-
-import java.io.File;
-
 @TeleOp
 public class OdometryTeleop extends OpMode {
 
     public DcMotor backLeft, backRight, frontLeft, frontRight, verticalLeft, verticalRight, horizontal, intake, wobble;
     public DcMotorEx brrr;
 
-    public static final double NEW_P = 10.0;
-    public static final double NEW_I = 3;
-    public static final double NEW_D = 0;
-    public static final double NEW_F = 12;
+    public static final double NEW_P = 8.0;
+    public static final double NEW_I = 0.0;
+    public static final double NEW_D = 0.0;
+    public static final double NEW_F = 12.0;
 
     BNO055IMU imu;
 
@@ -33,10 +29,6 @@ public class OdometryTeleop extends OpMode {
 
     public Servo shooterServo, wobbleServo;
     public long setTime = System.currentTimeMillis();
-
-    private File path1 = AppUtil.getInstance().getSettingsFile("path1.txt");
-    private File path2 = AppUtil.getInstance().getSettingsFile("path2.txt");
-    private File path3 = AppUtil.getInstance().getSettingsFile("path3.txt");
 
     double x;
     double y;
@@ -104,6 +96,7 @@ public class OdometryTeleop extends OpMode {
     }
 
     public void loop() {
+
         setTime = System.currentTimeMillis();
 
         if (gamepad1.left_bumper) {
@@ -112,6 +105,7 @@ public class OdometryTeleop extends OpMode {
             backRight.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * .35);
             backLeft.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * .35);
         }
+
         else {
             frontLeft.setPower(gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x);
             frontRight.setPower(-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x);
@@ -123,25 +117,23 @@ public class OdometryTeleop extends OpMode {
         if (gamepad1.a) {
             isPressed = true;
             shoot();
+
         }
 
-        else {
-        }
 
         if (gamepad1.b) {
             isPressed = true;
             while (isPressed) {
+                setTime = System.currentTimeMillis();
                 turn(0, 1, 0.3);
                 while(System.currentTimeMillis() - setTime < 200) {
 
                 }
-                goToPosition(-20 * CPR, 60 * CPR, 0.4, 0, 2 * CPR, 360, 0);
-                turn(180, 1, 0.34);
+                goToPosition(-20 * CPR, 53 * CPR, 0.4, 0, 2 * CPR, 360, 0);
+                turn(-178, 1, 0.34);
+                shoot();
                 isPressed = false;
             }
-        }
-
-        else {
         }
 
 
@@ -170,8 +162,7 @@ public class OdometryTeleop extends OpMode {
                 wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             }
-            else {
-            }
+
         }
         else if (gamepad1.dpad_up) {
 
@@ -192,8 +183,7 @@ public class OdometryTeleop extends OpMode {
                 wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             }
-            else {
-            }
+
         }
 
         else if (gamepad1.dpad_right){
@@ -211,8 +201,7 @@ public class OdometryTeleop extends OpMode {
                 wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             }
-            else {
-            }
+
         }
         else if (gamepad1.dpad_left){
 
@@ -229,9 +218,9 @@ public class OdometryTeleop extends OpMode {
                 wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                 wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             }
-            else {
-            }
+
         }
+
         else {
             wobble.setPower(0);
         }
@@ -248,6 +237,8 @@ public class OdometryTeleop extends OpMode {
 
         telemetry.addData("Wobble counts", wobble.getCurrentPosition());
         telemetry.addData("wobble servo position", wobbleServo.getPosition());
+
+
         telemetry.addData("Speed", brrr.getVelocity());
 
 
@@ -268,7 +259,7 @@ public class OdometryTeleop extends OpMode {
             minTurnPow = minTurnPow * -1;
         }
 
-        while (Math.abs(pivot) > 2) {
+        while (Math.abs(pivot) > 5) {
 
             currentAngle = getXAngle();
             pivot = angle - currentAngle;
@@ -309,56 +300,66 @@ public class OdometryTeleop extends OpMode {
 
             brrr.setPower(-0.88);
 
-            while(System.currentTimeMillis() - setTime < 1400) {
+            setTime = System.currentTimeMillis();
 
+            while(System.currentTimeMillis() - setTime < 1400) {
+                brrr.setPower(-0.88);
                 telemetry.addData("Revving", true);
                 telemetry.update();
-
-
             }
 
+            brrr.setPower(-0.88);
 
             while(System.currentTimeMillis() - setTime < 1650) {
+                brrr.setPower(-0.88);
                 shooterServo.setPosition(0.5);
+                brrr.setPower(-0.88);
                 telemetry.addData("Shot Number", 1);
                 telemetry.update();
             }
 
+            brrr.setPower(-0.88);
             shooterServo.setPosition(0.312);
+            brrr.setPower(-0.88);
 
             while(System.currentTimeMillis() - setTime < 2025) {
-
+                brrr.setPower(-0.88);
             }
 
+            brrr.setPower(-0.88);
 
             while(System.currentTimeMillis() - setTime < 2250) {
+                brrr.setPower(-0.88);
                 shooterServo.setPosition(0.5);
+                brrr.setPower(-0.88);
                 telemetry.addData("Shot Number", 2);
                 telemetry.update();
-
-
             }
 
+            brrr.setPower(-0.88);
             shooterServo.setPosition(0.312);
+            brrr.setPower(-0.88);
 
             while(System.currentTimeMillis() - setTime < 2650) {
-
+                brrr.setPower(-0.88);
             }
 
+            brrr.setPower(-0.88);
 
             while(System.currentTimeMillis() - setTime < 2875) {
+                brrr.setPower(-0.88);
                 shooterServo.setPosition(0.5);
-
+                brrr.setPower(-0.88);
                 telemetry.addData("Shot Number", 3);
                 telemetry.update();
-
             }
 
+            brrr.setPower(-0.88);
             shooterServo.setPosition(0.312);
 
+            brrr.setPower(0);
             isPressed = false;
 
-            brrr.setPower(0);
         }
     }
 
