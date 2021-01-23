@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.firstinspires.ftc.robotcore.internal.system.CallbackRegistrar;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -156,67 +157,84 @@ public class MyOdometryOpMode extends LinearOpMode {
 
 
         if (positionVal.equals("FOUR")) {
-            // THis is for turing while moving DONT DELETE
-//            goToPosition(10*CPR, 10*CPR, 0.5, 100, 3*CPR, 10, 0.5);
-
-
-        }
-
-        else if (positionVal.equals("ONE")) {
-
-            goToPosition(7*CPR, -53*CPR, 0.5, 0, 2*CPR, 1, 1);
-//            dropServo.setPosition(0.45);
-            brrr.setPower(-0.76);
+            // Movement starts here
+            brrr.setPower(-0.765);
+            goToPosition(7.5*CPR, -3*CPR, 0.35, 0, 2*CPR, 2, 1);
+            goToPosition(10*CPR, -53*CPR, 0.45, 0, 2*CPR, 2, 1);
+            dropServo.setPosition(0.45);
             sleep(250);
-            turn(-6, 0.4, 0.26, -0.76);
-            sleep(500);
+            brrr.setPower(-0.765);
+            singleShot();
+            sleep(250);
+            turn(-6, 0.35, 0.2, -0.76);
+            sleep(250);
             brrr.setPower(-0.76);
             singleShot();
-            turn(-12, 0.4, 0.26, -0.76);
-            sleep(500);
-            brrr.setPower(-0.76);
-            singleShot();
-            turn(-16, 0.4, 0.26, -0.76);
-            sleep(500);
+            sleep(250);
+            turn(-12.5, 0.35, 0.2, -0.76);
+            sleep(250);
             brrr.setPower(-0.76);
             singleShot();
             brrr.setPower(0);
             turn(0, 0.5, 0.26, 0);
-            goToPosition(-5*CPR, -69*CPR, 0.5, 0, 3*CPR, 360, 0);
-            sleep(200);
-            turn(178, 0.8, 0.4, 0);
-            wobbleDown();
-            sleep(100);
-            wobbleServo.setPosition(0);
-            wobbleUp(0.3);
-            turn(-6, 0.7, 0.5, 0);
-            wobbleDown();
-            wobbleServo.setPosition(0);
-            intake.setPower(1);
-            goToPosition(-5*CPR, -40*CPR, 0.425, 360, 5*CPR, 360, 0);
-            intake.setPower(0);
-            brrr.setPower(-0.88);
-            goToPosition(-5*CPR, -53*CPR, 0.5, 360, 3*CPR, 360, 0);
+
+        }
+
+        else if (positionVal.equals("ONE")) {
+            // Movement starts here
+            brrr.setPower(-0.765);
+            goToPosition(7.5*CPR, -3*CPR, 0.35, 0, 2*CPR, 2, 1);
+            goToPosition(10*CPR, -53*CPR, 0.45, 0, 2*CPR, 2, 1);
+            dropServo.setPosition(0.45);
+            sleep(250);
+            brrr.setPower(-0.765);
             singleShot();
-            turn(178, 0.7, 0.5, 0);
+            sleep(250);
+            turn(-6, 0.35, 0.2, -0.76);
+            sleep(250);
+            brrr.setPower(-0.76);
+            singleShot();
+            sleep(250);
+            turn(-12.5, 0.35, 0.2, -0.76);
+            sleep(250);
+            brrr.setPower(-0.76);
+            singleShot();
+            brrr.setPower(0);
+            turn(0, 0.5, 0.26, 0);
+            goToPosition(-5*CPR, -71*CPR, 0.5, 0, 2*CPR, 360, 0);
+            sleep(200);
+            turn(178, 0.8, 0.34, 0);
             wobbleDown();
             sleep(100);
             wobbleServo.setPosition(0);
-            sleep(80);
-            goToPosition(-20*CPR, -27*CPR, 0.425, 360, 5*CPR, 360, 0);
-            sleep(250);
-            wobbleServo.setPosition(0.475);
-            sleep(250);
             wobbleUp(0.3);
-            sleep(170);
-            goToPosition(-5*CPR, -69*CPR, 0.5, 0, 3*CPR, 360, 0);
+            turn(-3, 0.7, 0.34, 0);
+            sleep(100);
+            intake.setPower(-1);
+            goToPosition(-5*CPR, -40*CPR, 0.5, 0, 2* CPR, 360, 0);
+            wobbleDown();
+            goToPosition(-17*CPR, -40*CPR, 0.5, 0, 2*CPR, 360, 0);
+            sleep(200);
+            goToPosition(-17*CPR, -30*CPR, 0.5, 0, 2*CPR, 360, 0);
+            sleep(200);
+            wobbleServo.setPosition(0.47);
+            wobbleUp(0.15);
+            sleep(250);
+            brrr.setPower(-0.88);
+            goToPosition(-5*CPR, -54*CPR, 0.5, 0, 2*CPR, 360, 0);
+            turn(0, 0.5, 0.25, 0);
+            sleep(270);
+            singleShot();
+            goToPosition(-5*CPR, -71*CPR, 0.5, 0, 2*CPR, 360, 0);
+            turn(175, 0.5, 0.25, 0);
             wobbleDown();
             wobbleServo.setPosition(0);
-            wobbleUp(0.2);
-            wobbleServo.setPosition(0.475);
+            turn(0, 0.7, 0.5, 0);
+            goToPosition(-20*CPR, -27*CPR, 0.8, 360, 5*CPR, 360, 0);
+            turn(178, 0.8, 0.34, 0);
 
             setTime = System.currentTimeMillis();
-            while (System.currentTimeMillis() - setTime < 1800) {
+            while (System.currentTimeMillis() - setTime < 2100) {
                 setPowerAll();
             }
 
@@ -233,16 +251,16 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         else {
 
-            // Movement starts here
+             // Movement starts here
             goToPosition(0*CPR, -53*CPR, 0.4, 0, 2*CPR, 1, 1);
-//            dropServo.setPosition(0.45);
+            dropServo.setPosition(0.45);
             brrr.setPower(-0.76);
             sleep(250);
             turn(-7, 0.35, 0.2, -0.76);
             sleep(500);
             brrr.setPower(-0.76);
             singleShot();
-            turn(-12, 0.35, 0.2, -0.76);
+            turn(-12.5, 0.35, 0.2, -0.76);
             sleep(500);
             brrr.setPower(-0.76);
             singleShot();
@@ -275,7 +293,6 @@ public class MyOdometryOpMode extends LinearOpMode {
             wobbleServo.setPosition(0);
             sleep(80);
             wobbleUp(0.2);
-            wobbleServo.setPosition(0.47);
 
             setTime = System.currentTimeMillis();
             while (System.currentTimeMillis() - setTime < 2150) {
@@ -377,7 +394,7 @@ public class MyOdometryOpMode extends LinearOpMode {
 
 
         // Values that define the size and location of detection box
-        static final Point TOPLEFT_ANCHOR_POINT = new Point(190,179);
+        static final Point TOPLEFT_ANCHOR_POINT = new Point(198,179);
 
         static final int WIDTH = 25;
         static final int HEIGHT = 35;
