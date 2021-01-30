@@ -53,10 +53,6 @@ public class MyOdometryOpMode extends LinearOpMode {
 
     public long setTime = System.currentTimeMillis();
 
-    private File path1 = AppUtil.getInstance().getSettingsFile("path1.txt");
-    private File path2 = AppUtil.getInstance().getSettingsFile("path2.txt");
-    private File path3 = AppUtil.getInstance().getSettingsFile("path3.txt");
-
     double x;
     double y;
 
@@ -93,7 +89,7 @@ public class MyOdometryOpMode extends LinearOpMode {
         wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         wobbleServo = hardwareMap.servo.get("wobbles");
-        wobbleServo.setPosition(0.47);
+        wobbleServo.setPosition(0);
 
         dropServo = hardwareMap.servo.get("drop");
 
@@ -158,84 +154,153 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         if (positionVal.equals("FOUR")) {
             // Movement starts here
-            brrr.setPower(-0.765);
-            goToPosition(7.5*CPR, -3*CPR, 0.35, 0, 2*CPR, 2, 1);
-            goToPosition(10*CPR, -53*CPR, 0.45, 0, 2*CPR, 2, 1);
+            brrr.setPower(-0.77);
+            goToPosition(12.5*CPR, -3*CPR, 0.3, 0, 2*CPR, 2, 0.5);
+            sleep(80);
+            goToPosition(12.5*CPR, -53*CPR, 0.42, 0, 2*CPR, 2, 0.8);
             dropServo.setPosition(0.45);
             sleep(250);
-            brrr.setPower(-0.765);
+            brrr.setPower(-0.775);
             singleShot();
             sleep(250);
-            turn(-6, 0.35, 0.2, -0.76);
+            turn(-5, 0.35, 0.2, -0.775);
             sleep(250);
-            brrr.setPower(-0.76);
+            brrr.setPower(-0.775);
             singleShot();
             sleep(250);
-            turn(-12.5, 0.35, 0.2, -0.76);
+            turn(-10, 0.35, 0.2, -0.77);
             sleep(250);
-            brrr.setPower(-0.76);
+            brrr.setPower(-0.775);
             singleShot();
             brrr.setPower(0);
             turn(0, 0.5, 0.26, 0);
+            sleep(150);
+            goToPosition(-20*CPR, -95*CPR, 0.5, 0, 2*CPR, 370, 0);
+            turn(178, 0.7, 0.34, 0);
+            wobbleDown();
+            wobbleServo.setPosition(0.7);
+            sleep(150);
+            wobbleUp(0.3);
+            turn(0, 0.7, 0.36, 0);
+//            intake.setPower(-1);
+            wobbleDown();
+            goToPosition(-20*CPR, -28*CPR, 0.5, 0, 2*CPR, 370, 0);
+            sleep(250);
+            wobbleServo.setPosition(0);
+            sleep(250);
+            wobbleUp(0.2);
+            sleep(150);
+
+            goToPosition(-20*CPR, -95*CPR, 0.5, 0, 2*CPR, 360, 0);
+            turn(178, 0.7, 0.34, 0);
+            wobbleDown();
+            wobbleServo.setPosition(0.7);
+            sleep(150);
+            wobbleUp(0.3);
+            turn(0, 0.7, 0.36, 0);
+
+            setTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - setTime < 900) {
+                backLeft.setPower(-1);
+                frontLeft.setPower(1);
+                frontRight.setPower(-1);
+                backRight.setPower(1);
+            }
+
+            frontLeft.setPower(0);
+            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            frontRight.setPower(0);
+            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backLeft.setPower(0);
+            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backRight.setPower(0);
+            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         }
 
         else if (positionVal.equals("ONE")) {
             // Movement starts here
-            brrr.setPower(-0.765);
-            goToPosition(7.5*CPR, -3*CPR, 0.35, 0, 2*CPR, 2, 1);
-            goToPosition(10*CPR, -53*CPR, 0.45, 0, 2*CPR, 2, 1);
+            brrr.setPower(-0.77);
+            goToPosition(7.5*CPR, -3*CPR, 0.32, 0, 2*CPR, 2, 1);
+            sleep(80);
+            goToPosition(12.5*CPR, -53*CPR, 0.45, 0, 2*CPR, 2, 1);
             dropServo.setPosition(0.45);
             sleep(250);
+            brrr.setPower(-0.775);
+            singleShot();
+            sleep(250);
+            turn(-5, 0.35, 0.2, -0.775);
+            sleep(250);
+            brrr.setPower(-0.77);
+            singleShot();
+            sleep(250);
+            turn(-11.2, 0.35, 0.2, -0.765);
+            sleep(250);
             brrr.setPower(-0.765);
-            singleShot();
-            sleep(250);
-            turn(-6, 0.35, 0.2, -0.76);
-            sleep(250);
-            brrr.setPower(-0.76);
-            singleShot();
-            sleep(250);
-            turn(-12.5, 0.35, 0.2, -0.76);
-            sleep(250);
-            brrr.setPower(-0.76);
             singleShot();
             brrr.setPower(0);
             turn(0, 0.5, 0.26, 0);
-            goToPosition(-5*CPR, -71*CPR, 0.5, 0, 2*CPR, 360, 0);
+            goToPosition(0*CPR, -76*CPR, 0.5, 0, 2*CPR, 360, 0);
             sleep(200);
             turn(178, 0.8, 0.34, 0);
             wobbleDown();
-            sleep(100);
-            wobbleServo.setPosition(0);
+            wobbleServo.setPosition(0.7);
+            sleep(150);
             wobbleUp(0.3);
             turn(-3, 0.7, 0.34, 0);
             sleep(100);
             intake.setPower(-1);
-            goToPosition(-5*CPR, -40*CPR, 0.5, 0, 2* CPR, 360, 0);
+            goToPosition(-3*CPR, -40*CPR, 0.45, 0, 3* CPR, 360, 0);
             wobbleDown();
-            goToPosition(-17*CPR, -40*CPR, 0.5, 0, 2*CPR, 360, 0);
+            goToPosition(-13*CPR, -40*CPR, 0.435, 0, 3*CPR, 360, 0);
             sleep(200);
-            goToPosition(-17*CPR, -30*CPR, 0.5, 0, 2*CPR, 360, 0);
+            goToPosition(-11.5*CPR, -26.5*CPR, 0.435, 0, 3*CPR, 360, 0);
             sleep(200);
-            wobbleServo.setPosition(0.47);
+            intake.setPower(0);
+            wobbleServo.setPosition(0);
+            sleep(200);
             wobbleUp(0.15);
-            sleep(250);
             brrr.setPower(-0.88);
-            goToPosition(-5*CPR, -54*CPR, 0.5, 0, 2*CPR, 360, 0);
+            goToPosition(0*CPR, -57*CPR, 0.5, 0, 2*CPR, 360, 0);
             turn(0, 0.5, 0.25, 0);
             sleep(270);
             singleShot();
-            goToPosition(-5*CPR, -71*CPR, 0.5, 0, 2*CPR, 360, 0);
-            turn(175, 0.5, 0.25, 0);
+            goToPosition(0*CPR, -73*CPR, 0.5, 0, 2*CPR, 360, 0);
+            turn(175, 0.8, 0.5, 0);
             wobbleDown();
-            wobbleServo.setPosition(0);
-            turn(0, 0.7, 0.5, 0);
-            goToPosition(-20*CPR, -27*CPR, 0.8, 360, 5*CPR, 360, 0);
-            turn(178, 0.8, 0.34, 0);
+            wobbleServo.setPosition(0.7);
+            sleep(300);
+            wobbleUp(0.25);
+            /*
+            full speed back and diagonal for optimization
+             */
 
             setTime = System.currentTimeMillis();
-            while (System.currentTimeMillis() - setTime < 2100) {
-                setPowerAll();
+            while (System.currentTimeMillis() - setTime < 900) {
+                backLeft.setPower(-1);
+                frontLeft.setPower(1);
+                frontRight.setPower(-1);
+                backRight.setPower(1);
+            }
+
+            frontLeft.setPower(0);
+            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            frontRight.setPower(0);
+            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backLeft.setPower(0);
+            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backRight.setPower(0);
+            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            sleep(120);
+
+            setTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - setTime < 900) {
+                backLeft.setPower(-1);
+                frontLeft.setPower(0.35);
+                frontRight.setPower(-1);
+                backRight.setPower(0.35);
             }
 
             frontLeft.setPower(0);
@@ -254,48 +319,46 @@ public class MyOdometryOpMode extends LinearOpMode {
              // Movement starts here
             goToPosition(0*CPR, -53*CPR, 0.4, 0, 2*CPR, 1, 1);
             dropServo.setPosition(0.45);
-            brrr.setPower(-0.76);
+            brrr.setPower(-0.77);
             sleep(250);
-            turn(-7, 0.35, 0.2, -0.76);
+            turn(-7, 0.35, 0.2, -0.775);
             sleep(500);
-            brrr.setPower(-0.76);
+            brrr.setPower(-0.77);
             singleShot();
-            turn(-12.5, 0.35, 0.2, -0.76);
+            turn(-12, 0.35, 0.2, -0.77);
             sleep(500);
-            brrr.setPower(-0.76);
+            brrr.setPower(-0.77);
             singleShot();
-            turn(-17, 0.35, 0.2, -0.76);
+            turn(-18, 0.35, 0.2, -0.77);
             sleep(500);
-            brrr.setPower(-0.76);
+            brrr.setPower(-0.775);
             singleShot();
             brrr.setPower(0);
             turn(0, 0.5, 0.26, 0);
-            goToPosition(-20*CPR, -53*CPR, 0.5, 0, 2*CPR, 360, 0);
+            goToPosition(-16*CPR, -55*CPR, 0.5, 0, 2*CPR, 360, 0);
             sleep(200);
             turn(178, 0.8, 0.34, 0);
             wobbleDown();
-            sleep(100);
-            wobbleServo.setPosition(0);
+            wobbleServo.setPosition(0.7);
+            sleep(150);
             wobbleUp(0.3);
             turn(-6, 0.7, 0.34, 0);
             wobbleDown();
+            goToPosition(-16*CPR, -30*CPR, 0.425, 360, 2*CPR, 360, 0);
+            sleep(350);
             wobbleServo.setPosition(0);
-            goToPosition(-20*CPR, -27*CPR, 0.425, 360, 2*CPR, 360, 0);
-            sleep(250);
-            wobbleServo.setPosition(0.475);
-            sleep(250);
+            sleep(300);
             wobbleUp(0.3);
-            sleep(170);
-            goToPosition(-20*CPR, -50*CPR, 0.5, 360, 2*CPR, 360, 0);
+            sleep(100);
+            goToPosition(-16*CPR, -50*CPR, 0.5, 360, 2*CPR, 360, 0);
             turn(178, 0.64, 0.34, 0);
             wobbleDown();
             sleep(100);
-            wobbleServo.setPosition(0);
-            sleep(80);
+            wobbleServo.setPosition(0.7);
             wobbleUp(0.2);
 
             setTime = System.currentTimeMillis();
-            while (System.currentTimeMillis() - setTime < 2150) {
+            while (System.currentTimeMillis() - setTime < 2250) {
                 setPowerAll();
             }
 
