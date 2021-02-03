@@ -197,7 +197,35 @@ public class MyOdometryOpMode extends LinearOpMode {
             shoot();
             sleep(250);
             wobbleDown();
+            moveToPosition(-10*CPR, -37*CPR, 0.4, 0, 3*CPR, 360, 0);
+            sleep(100);
+            moveToPosition(-10*CPR, -0.35*CPR, 0.4, 0, 3*CPR, 360, 0);
+            wobbleServo.setPosition(0);
+            sleep(200);
+            wobbleUp(0.2);
+            moveToPosition(-10*CPR, -94*CPR, 0.9, 0, 5*CPR, 360, 0);
+            turn(178, 0.9, 0.6, 0);
+            wobbleDown();
+            wobbleServo.setPosition(0.7);
+            wobbleUp(0.3);
+            sleep(270);
 
+            setTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - setTime < 500) {
+                backLeft.setPower(-1);
+                frontLeft.setPower(1);
+                frontRight.setPower(-1);
+                backRight.setPower(1);
+            }
+
+            frontLeft.setPower(0);
+            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            frontRight.setPower(0);
+            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backLeft.setPower(0);
+            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            backRight.setPower(0);
+            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             requestOpModeStop();
 
@@ -627,33 +655,42 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         while (opModeIsActive() && (distance > distanceErr || Math.abs(pivotCorrection) > turnErr)) {
 
+            // Updating the distance to the target values on each loop of the while loop to see if distance is reached
             distanceToTargX = targetX - positionUpdate.returnXCoordinate();
             distanceToTargY = targetY - positionUpdate.returnYCoordinate();
             distance = Math.hypot(distanceToTargX, distanceToTargY);
 
+            // Calculating the angle the target distance is at relative to the robot
             double robotAngle = Math.toDegrees(Math.atan2(distanceToTargX, distanceToTargY));
 
+            //Calculating the X and Y power components for the motors
             double movementXComponent = calculateX(robotAngle, drivePow);
             double movementYComponent = calculateY(robotAngle, drivePow);
 
+            // Calculating pivotCorrection to see if the desired orientation has been reached or not
             pivotCorrection = desiredOrientation - positionUpdate.returnOrientation();
 
+            // Calculating the turn power for motors
             double robotTurn = Range.clip(Math.toRadians(pivotCorrection)/ Math.toRadians(180), -1, 1) * turnPow;
 
+            //Set Power to motors for movement
             frontLeft.setPower(-movementYComponent - movementXComponent - robotTurn);
             frontRight.setPower(movementYComponent - movementXComponent - robotTurn);
             backLeft.setPower(movementYComponent - movementXComponent + robotTurn);
             backRight.setPower(-movementYComponent - movementXComponent + robotTurn);
 
-            //Display Global (x, y, theta) coordinates
+            //Update position (x, y, theta) values
             telemetry.addData("X Position", positionUpdate.returnXCoordinate() / CPR);
             telemetry.addData("Y Position", positionUpdate.returnYCoordinate() / CPR);
             telemetry.addData("Orientation (Odometry)", positionUpdate.returnOrientation());
             telemetry.addData("Orientation (IMU)", getXAngle());
             telemetry.update();
-
         }
+//      Stop the motors and set Mode to Brake
+        brake();
+    }
 
+    public void brake() {
         frontLeft.setPower(0);
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setPower(0);
