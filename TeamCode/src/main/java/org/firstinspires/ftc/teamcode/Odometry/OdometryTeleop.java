@@ -36,6 +36,8 @@ public class OdometryTeleop extends OpMode {
     double x;
     double y;
 
+    public int powerIsPressed = 0;
+
 
     final double CPR = 1892.37242833;
 
@@ -248,29 +250,46 @@ public class OdometryTeleop extends OpMode {
 
         if (gamepad1.x) {
 
-            brrr.setPower(-0.853);
+            brrr.setPower(-0.78);
 
             setTime = System.currentTimeMillis();
 
             while(System.currentTimeMillis() - setTime < 1400) {
-                brrr.setPower(-0.853);
+                brrr.setPower(-0.78);
                 telemetry.addData("Revving", true);
                 telemetry.update();
             }
 
-            brrr.setPower(-0.853);
+            brrr.setPower(-0.78);
 
             while(System.currentTimeMillis() - setTime < 1650) {
-                brrr.setPower(-0.853);
+                brrr.setPower(-0.78);
                 shooterServo.setPosition(0.5);
-                brrr.setPower(-0.853);
+                brrr.setPower(-0.78);
                 telemetry.addData("Shot Number", 1);
                 telemetry.update();
             }
 
-            brrr.setPower(-0.853);
+            brrr.setPower(-0.78);
             shooterServo.setPosition(0.312);
             brrr.setPower(0);
+
+        }
+
+        if (gamepad1.y) {
+            double currentAngle = getXAngle();
+            double newAngle =  currentAngle - 5;
+            if(powerIsPressed == 0) {
+                turn(newAngle, 0.5, 0.2);
+                powerIsPressed = 1;
+                currentAngle = getXAngle();
+                newAngle = currentAngle - 2;
+            }
+
+            else if (powerIsPressed == 1) {
+                turn(newAngle, 0.5, 0.2);
+                powerIsPressed = 0;
+            }
 
         }
 

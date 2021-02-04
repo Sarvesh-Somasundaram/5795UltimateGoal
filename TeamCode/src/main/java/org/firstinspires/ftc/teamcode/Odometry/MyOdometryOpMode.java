@@ -198,34 +198,34 @@ public class MyOdometryOpMode extends LinearOpMode {
             sleep(250);
             wobbleDown();
             moveToPosition(-10*CPR, -37*CPR, 0.4, 0, 3*CPR, 360, 0);
-            sleep(100);
-            moveToPosition(-10*CPR, -0.35*CPR, 0.4, 0, 3*CPR, 360, 0);
-            wobbleServo.setPosition(0);
-            sleep(200);
-            wobbleUp(0.2);
-            moveToPosition(-10*CPR, -94*CPR, 0.9, 0, 5*CPR, 360, 0);
-            turn(178, 0.9, 0.6, 0);
-            wobbleDown();
-            wobbleServo.setPosition(0.7);
-            wobbleUp(0.3);
-            sleep(270);
-
-            setTime = System.currentTimeMillis();
-            while (System.currentTimeMillis() - setTime < 500) {
-                backLeft.setPower(-1);
-                frontLeft.setPower(1);
-                frontRight.setPower(-1);
-                backRight.setPower(1);
-            }
-
-            frontLeft.setPower(0);
-            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            frontRight.setPower(0);
-            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backLeft.setPower(0);
-            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backRight.setPower(0);
-            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            sleep(100);
+//            moveToPosition(-10*CPR, -0.35*CPR, 0.4, 0, 3*CPR, 360, 0);
+//            wobbleServo.setPosition(0);
+//            sleep(200);
+//            wobbleUp(0.2);
+//            moveToPosition(-10*CPR, -94*CPR, 0.9, 0, 5*CPR, 360, 0);
+//            turn(178, 0.9, 0.6, 0);
+//            wobbleDown();
+//            wobbleServo.setPosition(0.7);
+//            wobbleUp(0.3);
+//            sleep(270);
+//
+//            setTime = System.currentTimeMillis();
+//            while (System.currentTimeMillis() - setTime < 500) {
+//                backLeft.setPower(-1);
+//                frontLeft.setPower(1);
+//                frontRight.setPower(-1);
+//                backRight.setPower(1);
+//            }
+//
+//            frontLeft.setPower(0);
+//            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            frontRight.setPower(0);
+//            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            backLeft.setPower(0);
+//            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//            backRight.setPower(0);
+//            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             requestOpModeStop();
 
