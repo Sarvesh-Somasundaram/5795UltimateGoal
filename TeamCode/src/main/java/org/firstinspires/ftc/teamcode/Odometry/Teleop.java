@@ -13,18 +13,22 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp
-public class OdometryTeleop extends OpMode {
+@TeleOp(name = "Competition Teleop")
+public class Teleop extends OpMode {
 
-
+    // Declaring all the motors, amnd Servos
     public DcMotor backLeft, backRight, frontLeft, frontRight, verticalLeft, verticalRight, horizontal, intake, wobble;
-    public DcMotorEx brrr;
+    public DcMotorEx brrr; // brrr is our shooter motor, named after an inside joke based on the sound the motor makes
 
+    // Declaring PIDF coefficients for shooter control
     public static final double NEW_P = 8.0;
     public static final double NEW_I = 0.0;
     public static final double NEW_D = 0.0;
     public static final double NEW_F = 12.0;
 
+    public double newAngle;
+
+    // Declaring the imu
     BNO055IMU imu;
 
     private boolean isPressed = false;
@@ -33,22 +37,21 @@ public class OdometryTeleop extends OpMode {
     public Servo shooterServo, wobbleServo;
     public long setTime = System.currentTimeMillis();
 
-    double x;
-    double y;
-
     public int powerIsPressed = 0;
 
-
+    // Number of ticks per rotation
     final double CPR = 1892.37242833;
 
     //Hardware Map Names for drive motors and odometry wheels
     String frName = "fright", brName = "bright", flName = "fleft", blName = "bleft";
     String verticalLeftEncoderName = flName, verticalRightEncoderName = frName, horizontalEncoderName = blName;
 
+    // Start tracking position for odometry
     OdometryCoordinatePosition positionUpdate;
 
     @Override
     public void init() {
+        //Initializing the motors, servos, and pidf coefficients
 
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
         brrr.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -68,7 +71,6 @@ public class OdometryTeleop extends OpMode {
         wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         wobbleServo = hardwareMap.servo.get("wobbles");
-        wobbleServo.setPosition(0);
 
         driveMotorMap(frName, brName, flName, blName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
 
@@ -77,6 +79,7 @@ public class OdometryTeleop extends OpMode {
         Thread positionThread = new Thread(positionUpdate);
         positionThread.start();
 
+        // Making sure the drive motors are not moving
         frontLeft.setPower(0);
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setPower(0);
@@ -101,12 +104,14 @@ public class OdometryTeleop extends OpMode {
         parameters.loggingTag          = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu.initialize(parameters);
+
         telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
         telemetry.clear();
 
         telemetry.addData("Status", "Init Complete");
         telemetry.update();
 
+        // Altering the loop stuck values because some loops in our code take a while to complete
         msStuckDetectInit     = 5000;
         msStuckDetectInitLoop = 5000;
         msStuckDetectStart    = 11500;
@@ -117,11 +122,13 @@ public class OdometryTeleop extends OpMode {
 
     public void loop() {
 
-
+        // Start the timer for the movement functions later
         setTime = System.currentTimeMillis();
+
+        // Getting the orientation of the robot
         robotOrientation = getXAngle();
 
-
+        // Movement functions, left bumper makes the drive train move in slow mode
         if (gamepad1.left_bumper) {
             frontLeft.setPower((gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * .35);
             frontRight.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x) * .35);
@@ -129,6 +136,7 @@ public class OdometryTeleop extends OpMode {
             backLeft.setPower((-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x) * .35);
         }
 
+        // right bumper causes the drivetrain to brake
         else if(gamepad1.right_bumper) {
             frontLeft.setPower(0);
             frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -140,6 +148,7 @@ public class OdometryTeleop extends OpMode {
             backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
 
+        // normal movement
         else {
             frontLeft.setPower(gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x);
             frontRight.setPower(-gamepad1.left_stick_y - gamepad1.left_stick_x - gamepad1.right_stick_x);
@@ -147,14 +156,14 @@ public class OdometryTeleop extends OpMode {
             backLeft.setPower(-gamepad1.left_stick_y - gamepad1.left_stick_x + gamepad1.right_stick_x);
         }
 
-
+        // Button to shoot 3 discs
         if (gamepad1.a) {
             isPressed = true;
             shoot();
 
         }
 
-
+        // functions to power the intake mechanism
         if (gamepad1.left_trigger > 0) {
             intake.setPower(gamepad1.left_trigger);
         }
@@ -165,8 +174,10 @@ public class OdometryTeleop extends OpMode {
             intake.setPower(0);
         }
 
+        // These functions are used to control the wobble arm for picking up and depositing
         if (gamepad1.dpad_down) {
-
+            // Check if the position of the servo is closed to make sure the arm doesn't break
+            // moves the servo down and opens the servo to get ready to pick up
             if(wobbleServo.getPosition() == 0){
                 wobble.setTargetPosition(425);
                 wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -183,12 +194,15 @@ public class OdometryTeleop extends OpMode {
 
         }
         else if (gamepad1.dpad_up) {
-
+            // get the time and initialize it to setTime
             setTime = System.currentTimeMillis();
 
+            // Check if the servo position is open to make sure the arm doesn't break
+            // closes the servo and moves back into the robot
             if (wobbleServo.getPosition() > 0.65) {
                 wobbleServo.setPosition(0);
 
+                // waiting until the arm is closed
                 setTime = System.currentTimeMillis();
                 while(System.currentTimeMillis()-setTime < 600){
 
@@ -211,6 +225,9 @@ public class OdometryTeleop extends OpMode {
 
         else if (gamepad1.dpad_right){
 
+            // checking to see if the servo is closed to make sure the arm doesnt break
+            // put the arm back down onto the wall of the field to deposit the wobble
+            // goal and opens the servo arm
             if(wobbleServo.getPosition() == 0) {
                 wobble.setTargetPosition(320);
                 wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -228,6 +245,9 @@ public class OdometryTeleop extends OpMode {
         }
         else if (gamepad1.dpad_left){
 
+            // Checks to see if the servo is open to make sure the arm doesn't break
+            // brings the arm back into the robot
+
             if (wobbleServo.getPosition() > 0.65) {
 
                 wobble.setTargetPosition(-320);
@@ -235,6 +255,11 @@ public class OdometryTeleop extends OpMode {
                 wobble.setPower(0.3);
 
                 while(wobble.isBusy()) {
+                    // if the position is not hit, then break out of the loop
+                    setTime = System.currentTimeMillis();
+                    if (System.currentTimeMillis() - setTime > 1200) {
+                        break;
+                    }
                 }
                 wobbleServo.setPosition(0);
 
@@ -245,11 +270,8 @@ public class OdometryTeleop extends OpMode {
 
         }
 
-
-
-
+        // this button does a single shot for the power shots at endgame
         if (gamepad1.x) {
-
             brrr.setPower(-0.78);
 
             setTime = System.currentTimeMillis();
@@ -276,18 +298,27 @@ public class OdometryTeleop extends OpMode {
 
         }
 
+        // this button turns the robot by 5 degrees and by 7 degrees depending on how many times
+        // it is pressed for lining up for powershot
         if (gamepad1.y) {
             double currentAngle = getXAngle();
-            double newAngle =  currentAngle - 5;
+
+            // if it is the first time the button is pressed, the robot turns by 5 degrees to the left
             if(powerIsPressed == 0) {
+                newAngle =  currentAngle - 5;
                 turn(newAngle, 0.5, 0.2);
+                // powerIsPressed is set to 1 for second time press
                 powerIsPressed = 1;
                 currentAngle = getXAngle();
+                // newAngle is changed by 2 degrees to the left
                 newAngle = currentAngle - 2;
             }
 
+            // if it is the second time it is pressed, the robot moves by the newAngle calculated
+            // previously by 2 degrees
             else if (powerIsPressed == 1) {
                 turn(newAngle, 0.5, 0.2);
+                //changes the powerIsPressed to 0
                 powerIsPressed = 0;
             }
 
@@ -314,22 +345,28 @@ public class OdometryTeleop extends OpMode {
 
     }
 
+    // Getting the orientation fo the robot from the imu
     private double getXAngle(){
         return (-imu.getAngularOrientation().firstAngle);
     }
 
+    // function used to turn the robot by a specfic angle
     public void turn(double angle, double turnPow, double minTurnPow) {
         double currentAngle = getXAngle();
 
         double pivot = angle - currentAngle;
-        double initial_pivot = angle - currentAngle;
 
+        /* the algorithm checks to see what the pivot change required is and then if that value
+        lies in any of the below ranges, the power values are multiplied by -1 to get the most
+        optimal turn direction, either clockwise or counter clockwise.
+        */
         if (pivot >180 || ((pivot > -180) && (pivot < 0))) {
             minTurnPow = minTurnPow * -1;
             turnPow = turnPow*-1;
         }
 
-
+        // while the pivot change is less than 2, calculate the turnPower
+        // and turn based on that power
         while (Math.abs(pivot) > 2) {
 
             currentAngle = getXAngle();
@@ -344,6 +381,8 @@ public class OdometryTeleop extends OpMode {
                 frontRight.setPower(-turnPower);
                 backRight.setPower(turnPower);
             }
+            // if the angle gets too small, and the turnPower becomes too small, then turn the
+            // drivetrain using the minTurnPower value
             else {
                 backLeft.setPower(minTurnPow);
                 frontLeft.setPower(-minTurnPow);
@@ -367,14 +406,19 @@ public class OdometryTeleop extends OpMode {
 
     }
 
+    // this method is used to shoot 3 shots in a row in under 1.5 seconds
     public void shoot()  {
 
+        /* use this while loop so the code doesnt break out of the loop prematurely, this is also
+        the reason we had to increase the loop stuck detect values
+         */
         while (isPressed) {
-
+            // the shooter servo is set to start revving up
             brrr.setPower(-0.875);
 
             setTime = System.currentTimeMillis();
-
+            // these while loops are implemented to give the motor time to rev back up to full
+            // speed after each shot, assisted by the PID control
             while(System.currentTimeMillis() - setTime < 1480) {
                 brrr.setPower(-0.875);
                 telemetry.addData("Revving", true);
@@ -436,7 +480,7 @@ public class OdometryTeleop extends OpMode {
         }
     }
 
-    // Custom moveToPosition function
+    // Custom moveToPosition function, will implement later to assist lining up for shooting
     public void moveToPosition(double targetX, double targetY, double drivePow, double desiredOrientation, double distanceErr, double turnErr, double turnPow){
 
         double distanceToTargX = targetX - positionUpdate.returnXCoordinate();
@@ -490,6 +534,7 @@ public class OdometryTeleop extends OpMode {
         return Math.cos(Math.toRadians(desiredAngle)) * speed;
     }
 
+    //initialize the drivetrain motors
     private void driveMotorMap(String frName, String brName, String flName, String blName, String lEncoderName, String rEncoderName, String hEncoderName){
         frontRight = hardwareMap.dcMotor.get(frName);
         backRight = hardwareMap.dcMotor.get(brName);
