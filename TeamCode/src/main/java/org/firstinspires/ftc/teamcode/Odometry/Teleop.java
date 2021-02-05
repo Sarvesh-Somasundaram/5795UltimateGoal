@@ -26,12 +26,13 @@ public class Teleop extends OpMode {
     public static final double NEW_D = 0.0;
     public static final double NEW_F = 12.0;
 
-    public double newAngle;
+    private double newAngle;
 
     // Declaring the imu
     BNO055IMU imu;
 
     private boolean isPressed = false;
+    private boolean isWobbleIn = false;
     double robotOrientation;
 
     public Servo shooterServo, wobbleServo;
@@ -118,6 +119,20 @@ public class Teleop extends OpMode {
         msStuckDetectLoop     = 11500;
         msStuckDetectStop     = 2800;
 
+        if (wobbleServo.getPosition() > 0.65) {
+            wobbleServo.setPosition(0);
+            wobble.setTargetPosition(-425);
+            wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            wobble.setPower(0.3);
+
+            while(wobble.isBusy()) {
+            }
+
+            wobble.setPower(0);
+            wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        }
+
     }
 
     public void loop() {
@@ -160,7 +175,6 @@ public class Teleop extends OpMode {
         if (gamepad1.a) {
             isPressed = true;
             shoot();
-
         }
 
         // functions to power the intake mechanism
@@ -176,99 +190,84 @@ public class Teleop extends OpMode {
 
         // These functions are used to control the wobble arm for picking up and depositing
         if (gamepad1.dpad_down) {
-            // Check if the position of the servo is closed to make sure the arm doesn't break
-            // moves the servo down and opens the servo to get ready to pick up
-            if(wobbleServo.getPosition() == 0){
-                wobble.setTargetPosition(425);
-                wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                wobble.setPower(0.3);
 
-                while(wobble.isBusy()) {
-                }
-                wobbleServo.setPosition(0.7);
+            if(!isWobbleIn) {
+                // Check if the position of the servo is closed to make sure the arm doesn't break
+                // moves the servo down and opens the servo to get ready to pick up
+                if (wobbleServo.getPosition() == 0) {
+                    wobble.setTargetPosition(425);
+                    wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    wobble.setPower(0.3);
 
-                wobble.setPower(0);
-                wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            }
-
-        }
-        else if (gamepad1.dpad_up) {
-            // get the time and initialize it to setTime
-            setTime = System.currentTimeMillis();
-
-            // Check if the servo position is open to make sure the arm doesn't break
-            // closes the servo and moves back into the robot
-            if (wobbleServo.getPosition() > 0.65) {
-                wobbleServo.setPosition(0);
-
-                // waiting until the arm is closed
-                setTime = System.currentTimeMillis();
-                while(System.currentTimeMillis()-setTime < 600){
-
-                }
-
-                wobble.setTargetPosition(-425);
-                wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                wobble.setPower(0.3);
-
-                while(wobble.isBusy()) {
-                }
-
-                wobble.setPower(0);
-                wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-            }
-
-        }
-
-        else if (gamepad1.dpad_right){
-
-            // checking to see if the servo is closed to make sure the arm doesnt break
-            // put the arm back down onto the wall of the field to deposit the wobble
-            // goal and opens the servo arm
-            if(wobbleServo.getPosition() == 0) {
-                wobble.setTargetPosition(320);
-                wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                wobble.setPower(0.3);
-
-                while (wobble.isBusy()) {
-                    wobbleServo.setPosition(0.7);
-                }
-
-                wobble.setPower(0);
-                wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            }
-
-        }
-        else if (gamepad1.dpad_left){
-
-            // Checks to see if the servo is open to make sure the arm doesn't break
-            // brings the arm back into the robot
-
-            if (wobbleServo.getPosition() > 0.65) {
-
-                wobble.setTargetPosition(-320);
-                wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                wobble.setPower(0.3);
-
-                while(wobble.isBusy()) {
-                    // if the position is not hit, then break out of the loop
-                    setTime = System.currentTimeMillis();
-                    if (System.currentTimeMillis() - setTime > 1200) {
-                        break;
+                    while (wobble.isBusy()) {
                     }
-                }
-                wobbleServo.setPosition(0);
+                    wobbleServo.setPosition(0.7);
 
-                wobble.setPower(0);
-                wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-                wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    wobble.setPower(0);
+                    wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                } else if (wobbleServo.getPosition() > 0.65) {
+                    wobbleServo.setPosition(0);
+
+                    // waiting until the arm is closed
+                    setTime = System.currentTimeMillis();
+                    while (System.currentTimeMillis() - setTime < 600) {
+
+                    }
+
+                    wobble.setTargetPosition(-425);
+                    wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    wobble.setPower(0.3);
+
+                    while (wobble.isBusy()) {
+                    }
+
+                    wobble.setPower(0);
+                    wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+                    isWobbleIn = true;
+                }
             }
 
+            else if(isWobbleIn) {
+                if(wobbleServo.getPosition() == 0) {
+                    wobble.setTargetPosition(320);
+                    wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    wobble.setPower(0.3);
+
+                    while (wobble.isBusy()) {
+                        wobbleServo.setPosition(0.7);
+                    }
+
+                    wobble.setPower(0);
+                    wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                }
+
+                else if (wobbleServo.getPosition() > 0.65) {
+
+                    wobble.setTargetPosition(-320);
+                    wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    wobble.setPower(0.3);
+
+                    while(wobble.isBusy()) {
+                        // if the position is not hit, then break out of the loop
+                        setTime = System.currentTimeMillis();
+                        if (System.currentTimeMillis() - setTime > 1200) {
+                            break;
+                        }
+                    }
+                    wobbleServo.setPosition(0);
+
+                    wobble.setPower(0);
+                    wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    isWobbleIn = false;
+                }
+            }
         }
+
 
         // this button does a single shot for the power shots at endgame
         if (gamepad1.x) {
