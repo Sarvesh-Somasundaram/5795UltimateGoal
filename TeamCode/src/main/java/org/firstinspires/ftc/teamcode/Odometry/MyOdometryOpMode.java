@@ -25,48 +25,42 @@ import org.openftc.easyopencv.OpenCvPipeline;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 
-import java.io.File;
-
-
 
 @Autonomous(name = "Odometry Auto")
 public class MyOdometryOpMode extends LinearOpMode {
 
-    //Drive motors and odometry wheels
+    //Drive motors and odometry wheels and servos are declared here
     public DcMotor backLeft, backRight, frontLeft, frontRight, verticalLeft, verticalRight, horizontal, intake, wobble;
-
-    public DcMotorEx brrr;
+    public DcMotorEx brrr; // brrr is our shooter motor, named after an inside joke based on the sound the motor makes
 
     public Servo shooterServo, wobbleServo, dropServo;
 
-    public boolean shoot = false;
-
+    // declaring the imu from the expansion hub
     BNO055IMU imu;
 
+    //Declaring the PIDF coefficients for PID control
     public static final double NEW_P = 9.6;
     public static final double NEW_I = 0.0;
     public static final double NEW_D = 0.0;
     public static final double NEW_F = 12.0;
 
-
+    // Declaring and initializing the setTime to the current time
     public long setTime = System.currentTimeMillis();
-
+    // Declare and initialize the counts per inch
     final double CPR = 1892.37242833;
-
 
     //Hardware Map Names for drive motors and odometry wheels
     String frName = "fright", brName = "bright", flName = "fleft", blName = "bleft";
     String verticalLeftEncoderName = flName, verticalRightEncoderName = frName, horizontalEncoderName = blName;
-
+    // Start tracking position for odometry
     OdometryCoordinatePosition positionUpdate;
-
+    // Start the webcam and the disk recognition pipeline
     OpenCvCamera webCam;
     DiskDeterminationPipeline pipeline;
 
-
     @Override
     public void runOpMode() throws InterruptedException {
-
+        // Initialize the motors, and initialize the shooter motor to use the PID control
         brrr = (DcMotorEx)hardwareMap.get(DcMotor.class, "brrr");
         brrr.setDirection(DcMotorSimple.Direction.REVERSE);
         brrr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -74,6 +68,7 @@ public class MyOdometryOpMode extends LinearOpMode {
         PIDFCoefficients pidNew = new PIDFCoefficients(NEW_P, NEW_I, NEW_D, NEW_F, MotorControlAlgorithm.PIDF);
         brrr.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidNew);
 
+        //Initialize the servos and other mechanism motors and drivetrain motors
         shooterServo = hardwareMap.servo.get("brrrservo");
         shooterServo.setPosition(0.312);
 
@@ -99,17 +94,16 @@ public class MyOdometryOpMode extends LinearOpMode {
         parameters.loggingTag          = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu.initialize(parameters);
+
         telemetry.addData("Odometry System Calibration Status", "IMU Init Complete");
         telemetry.clear();
 
-
+        // initialize the webCam
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webCam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-
-
+        // initialize pipeline to the diskDetermination pipeline
         pipeline = new DiskDeterminationPipeline();
         webCam.setPipeline(pipeline);
-
         webCam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
         {
             @Override
@@ -122,11 +116,11 @@ public class MyOdometryOpMode extends LinearOpMode {
         //Initialize hardware map values
         driveMotorMap(frName, brName, flName, blName, verticalLeftEncoderName, verticalRightEncoderName, horizontalEncoderName);
 
-
         telemetry.addData("Status", "Init Complete");
         telemetry.update();
 
-        // Determine what position the disk is in
+        // Determine what position the disk is in and save the position to a String to store the
+        // first recognized values
         sleep(500);
         String positionVal = pipeline.position.toString();
 
@@ -143,14 +137,15 @@ public class MyOdometryOpMode extends LinearOpMode {
         positionThread.start();
 
         // Reverse encoder values to face the correct direction
-
         verticalRight.setDirection(DcMotorSimple.Direction.REVERSE);
         verticalLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
-
-
         if (positionVal.equals("FOUR")) {
-            // Movement starts here
+            /* Movement starts here for the four ring path, look below the opmode loop for more
+            information on what each of the methods used in the path do. In all paths, the power
+            shots are hit first, and then the first wobble goal is deposited, then the paths
+            differ after that point.
+             */
             brrr.setPower(-0.77);
             moveToPosition(14*CPR, -8*CPR, 0.4, 0, 3*CPR, 3, 0.8);
             sleep(80);
@@ -199,7 +194,7 @@ public class MyOdometryOpMode extends LinearOpMode {
             sleep(250);
             wobbleUp(0.2);
             moveToPosition(-10*CPR, -85*CPR, 1, 0, 8*CPR, 360, 0);
-
+            // turning without the turn method to save time by going at full speed
             setTime = System.currentTimeMillis();
             while (System.currentTimeMillis() - setTime < 800) {
                 backLeft.setPower(1);
@@ -207,19 +202,11 @@ public class MyOdometryOpMode extends LinearOpMode {
                 frontRight.setPower(-1);
                 backRight.setPower(1);
             }
-
-            frontLeft.setPower(0);
-            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            frontRight.setPower(0);
-            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backLeft.setPower(0);
-            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backRight.setPower(0);
-            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            brake();
 
             wobbleDown();
             wobbleServo.setPosition(0.7);
-
+            // go full speed to park on the line
             setTime = System.currentTimeMillis();
             while (System.currentTimeMillis() - setTime < 470) {
                 backLeft.setPower(-1);
@@ -227,24 +214,13 @@ public class MyOdometryOpMode extends LinearOpMode {
                 frontRight.setPower(-1);
                 backRight.setPower(1);
             }
-
-            frontLeft.setPower(0);
-            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            frontRight.setPower(0);
-            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backLeft.setPower(0);
-            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backRight.setPower(0);
-            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-            wobbleServo.setPosition(0);
-
+            brake();
             requestOpModeStop();
-
         }
 
         else if (positionVal.equals("ONE")) {
-            // Movement starts here
+            // Movement starts here for the one ring path, this path intakes one ring and shootes it
+            // in addition to all the other movements
             brrr.setPower(-0.77);
             moveToPosition(13.5*CPR, -8*CPR, 0.4, 0, 2*CPR, 2, 0.8);
             sleep(80);
@@ -294,10 +270,7 @@ public class MyOdometryOpMode extends LinearOpMode {
             wobbleDown();
             wobbleServo.setPosition(0.7);
             wobbleUp(0.25);
-
 //            full speed back for parking
-
-
             setTime = System.currentTimeMillis();
             while (System.currentTimeMillis() - setTime < 300) {
                 backLeft.setPower(-1);
@@ -305,44 +278,33 @@ public class MyOdometryOpMode extends LinearOpMode {
                 frontRight.setPower(-1);
                 backRight.setPower(1);
             }
-
-            frontLeft.setPower(0);
-            frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            frontRight.setPower(0);
-            frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backLeft.setPower(0);
-            backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            backRight.setPower(0);
-            backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
+            brake();
             requestOpModeStop();
-
-
         }
 
         else {
-            // Movement starts here
+            // Movement starts here for the zero ring path
             brrr.setPower(-0.77);
-            moveToPosition(13.5*CPR, -8*CPR, 0.4, 0, 2*CPR, 2, 0.8);
+            moveToPosition(13.5 * CPR, -8 * CPR, 0.4, 0, 2 * CPR, 2, 0.8);
             sleep(80);
-            moveToPosition(14*CPR, -53*CPR, 0.33, 0, 2*CPR, 2, 0.8);
+            moveToPosition(14 * CPR, -53 * CPR, 0.33, 0, 2 * CPR, 2, 0.8);
             dropServo.setPosition(0.45);
             sleep(250);
             brrr.setPower(-0.76);
             singleShot();
             sleep(350);
-            moveToPosition(20.5*CPR, -53*CPR, 0.25, 0, 2*CPR, 2, 0.5);
+            moveToPosition(20.5 * CPR, -53 * CPR, 0.25, 0, 2 * CPR, 2, 0.5);
             sleep(250);
             brrr.setPower(-0.7543);
             singleShot();
             sleep(400);
-            moveToPosition(27.5*CPR, -53*CPR, 0.3, 0, 2*CPR, 3, 0.5);
+            moveToPosition(27.5 * CPR, -53 * CPR, 0.3, 0, 2 * CPR, 3, 0.5);
             sleep(250);
             brrr.setPower(-0.7555);
             singleShot();
             brrr.setPower(0);
             turn(0, 0.5, 0.26, 0);
-            moveToPosition(-16*CPR, -57*CPR, 0.5, 0, 2*CPR, 360, 0);
+            moveToPosition(-16 * CPR, -57 * CPR, 0.5, 0, 2 * CPR, 360, 0);
             sleep(200);
             turn(178, 0.8, 0.34, 0);
             wobbleDown();
@@ -351,30 +313,27 @@ public class MyOdometryOpMode extends LinearOpMode {
             wobbleUp(0.3);
             turn(-6, 0.7, 0.34, 0);
             wobbleDown();
-            moveToPosition(-14*CPR, -25*CPR, 0.3, 360, 2*CPR, 360, 0);
+            moveToPosition(-14 * CPR, -25 * CPR, 0.3, 360, 2 * CPR, 360, 0);
             sleep(350);
             wobbleServo.setPosition(0);
             sleep(300);
             wobbleUp(0.3);
             sleep(100);
-            moveToPosition(-16*CPR, -58*CPR, 0.5, 360, 2*CPR, 360, 0);
+            moveToPosition(-16 * CPR, -58 * CPR, 0.5, 360, 2 * CPR, 360, 0);
             turn(178, 0.64, 0.34, 0);
             wobbleDown();
             sleep(100);
             wobbleServo.setPosition(0.7);
             wobbleUp(0.2);
-
             requestOpModeStop();
-
         }
-
 
         while(opModeIsActive()){
 
             telemetry.addData("Analysis", pipeline.getAnalysis());
             telemetry.addData("Position", positionVal);
 
-            // Don't burn CPU cycles busy-looping in this sample
+            // Don't burn CPU cycles busy-looping this sample
             sleep(50);
 
             //Display Global (x, y, theta) coordinates
@@ -382,24 +341,21 @@ public class MyOdometryOpMode extends LinearOpMode {
             telemetry.addData("Y Position", positionUpdate.returnYCoordinate() / CPR);
             telemetry.addData("Orientation (Odometry)", positionUpdate.returnOrientation());
             telemetry.addData("Orientation (IMU)", getXAngle());
-
-
+            // Display the actual encoder position values as well
             telemetry.addData("Vertical left encoder position", verticalLeft.getCurrentPosition());
             telemetry.addData("Vertical right encoder position", verticalRight.getCurrentPosition());
             telemetry.addData("horizontal encoder position", horizontal.getCurrentPosition());
 
             telemetry.addData("Thread Active", positionThread.isAlive());
-
-
+            // output the speed of the shooter motor to see if PID is working in keeping the
+            // speed constant
             telemetry.addData("Speed", brrr.getVelocity());
             telemetry.update();
         }
-
         //Stop the thread
         positionUpdate.stop();
-
     }
-
+    // This method moves the wobble goal up
     public void wobbleUp(double power) {
 
         wobble.setTargetPosition(-425);
@@ -412,10 +368,8 @@ public class MyOdometryOpMode extends LinearOpMode {
         wobble.setPower(0);
         wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
     }
-
-
+    // this method moves the wobble goal down
     public void wobbleDown() {
         wobble.setTargetPosition(425);
         wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -429,28 +383,20 @@ public class MyOdometryOpMode extends LinearOpMode {
         wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
-    public static class DiskDeterminationPipeline extends OpenCvPipeline
-    {
+    // this method is used to determine the number of disks
+    public static class DiskDeterminationPipeline extends OpenCvPipeline {
 
         // An enum to define ring positions
-        public enum RingPosition
-        {
-            FOUR,
-            ONE,
-            NONE
-        }
-
+        public enum RingPosition {FOUR, ONE, NONE}
         // Define colors
         static final Scalar BLUE = new Scalar(0, 0, 255);
         static final Scalar GREEN = new Scalar(0, 255, 0);
-
 
         // Values that define the size and location of detection box
         static final Point TOPLEFT_ANCHOR_POINT = new Point(198,179);
 
         static final int WIDTH = 25;
         static final int HEIGHT = 35;
-
         final int FOUR_RINGS = 150;
         final int ONE_RING = 135;
 
@@ -472,37 +418,26 @@ public class MyOdometryOpMode extends LinearOpMode {
         private volatile RingPosition position = RingPosition.FOUR;
 
         // COnverts YCrCb to Cb
-        void inputToCb(Mat input)
-        {
+        void inputToCb(Mat input) {
             Imgproc.cvtColor(input, YCrCb, Imgproc.COLOR_RGB2YCrCb);
             Core.extractChannel(YCrCb, Cb, 1);
         }
 
         @Override
-        public void init(Mat firstFrame)
-        {
+        public void init(Mat firstFrame) {
             inputToCb(firstFrame);
-
             box_Cb = Cb.submat(new Rect(pointA, pointB));
         }
 
         // Processing the frame to evaluate number of rings
         @Override
-        public Mat processFrame(Mat input)
-        {
+        public Mat processFrame(Mat input) {
             inputToCb(input);
-
             avg1 = (int) Core.mean(box_Cb).val[0];
-
             // Draws rectangle on input camera frame using the points defined earlier, pointA and pointB
-            Imgproc.rectangle(
-                    input,
-                    pointA,
-                    pointB,
-                    BLUE,
-                    2);
+            Imgproc.rectangle(input, pointA, pointB, BLUE, 2);
 
-            position = RingPosition.NONE; // Record the analysis
+            position = RingPosition.NONE; // Record the analysis of how many rings
             if(avg1 > FOUR_RINGS){
                 position = RingPosition.FOUR;
             }else if (avg1 > ONE_RING){
@@ -510,26 +445,19 @@ public class MyOdometryOpMode extends LinearOpMode {
             }else{
                 position = RingPosition.NONE;
             }
-
             // Another rectangle
-            Imgproc.rectangle(
-                    input,
-                    pointA,
-                    pointB,
-                    GREEN,
-                    -1); // Negative value here means infill
-
+            Imgproc.rectangle(input, pointA, pointB, GREEN, -1);
             return input;
         }
 
         // Getter that returns the analysis
-        public int getAnalysis()
-        {
+        public int getAnalysis() {
             return avg1;
         }
     }
 
-    
+    // this method is the same as in the teleop code, a turn function which turns based on the
+    // imu orientation value
     public void turn(double angle, double turnPow, double minTurnPow, double brrrpower) {
         double currentAngle = getXAngle();
 
@@ -561,39 +489,21 @@ public class MyOdometryOpMode extends LinearOpMode {
                 frontRight.setPower(-minTurnPow);
                 backRight.setPower(minTurnPow);
             }
-
             telemetry.addData("Orientation", currentAngle);
             telemetry.update();
         }
-
         brrr.setPower(brrrpower);
-
-        frontLeft.setPower(0);
-        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        frontRight.setPower(0);
-        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backLeft.setPower(0);
-        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        backRight.setPower(0);
-        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
+        brake();
     }
-
-
+    // the singleShot method does one single shot, used in the power shot section of the Auto
     public void singleShot() {
-
         shooterServo.setPosition(0.5);
         sleep(60);
         shooterServo.setPosition(0.312);
-
     }
-
-
-    // Custom function for quick firing three discs into high goal
+    // Custom function for quick firing three discs into high goal, used from the teleop code
     public void shoot()  {
-
         brrr.setPower(-0.825);
-
         setTime = System.currentTimeMillis();
 
         while(System.currentTimeMillis() - setTime < 1400) {
@@ -653,18 +563,17 @@ public class MyOdometryOpMode extends LinearOpMode {
 
         brrr.setPower(0);
     }
-
-
-    // Custom moveToPosition function
+    // Custom moveToPosition function, using odometry
     public void moveToPosition(double targetX, double targetY, double drivePow, double desiredOrientation, double distanceErr, double turnErr, double turnPow){
-
+        // getting the required distance from current position to the target values
         double distanceToTargX = targetX - positionUpdate.returnXCoordinate();
         double distanceToTargY = targetY - positionUpdate.returnYCoordinate();
-
+        // calculate the pivot correction value to see how much the robot needs to turn
         double pivotCorrection = desiredOrientation - positionUpdate.returnOrientation();
-
+        // calculate the distance using the target values
         double distance = Math.hypot(distanceToTargX, distanceToTargY);
 
+        // this loops until the distance is met and the pivot correction is maintained
         while (opModeIsActive() && (distance > distanceErr || Math.abs(pivotCorrection) > turnErr)) {
 
             // Updating the distance to the target values on each loop of the while loop to see if distance is reached
@@ -702,6 +611,7 @@ public class MyOdometryOpMode extends LinearOpMode {
         brake();
     }
 
+    // function to brake all drivetrain motors
     public void brake() {
         frontLeft.setPower(0);
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -714,7 +624,6 @@ public class MyOdometryOpMode extends LinearOpMode {
     }
 
     // Mapping the motors and encoders to hardware map
-
     private void driveMotorMap(String frName, String brName, String flName, String blName, String lEncoderName, String rEncoderName, String hEncoderName){
         frontRight = hardwareMap.dcMotor.get(frName);
         backRight = hardwareMap.dcMotor.get(brName);
@@ -762,7 +671,7 @@ public class MyOdometryOpMode extends LinearOpMode {
     private double calculateY(double desiredAngle, double speed) {
         return Math.cos(Math.toRadians(desiredAngle)) * speed;
     }
-
+    // getting the robot orientation using the imu gyro from the expansion hub
     private double getXAngle(){
         return (-imu.getAngularOrientation().firstAngle);
     }

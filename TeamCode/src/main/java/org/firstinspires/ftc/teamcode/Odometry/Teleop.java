@@ -480,7 +480,8 @@ public class Teleop extends OpMode {
         }
     }
 
-    // Custom moveToPosition function, will implement later to assist lining up for shooting
+    // Custom moveToPosition function, will implement later to assist lining up for shooting, same
+    // functionality as from the auto code
     public void moveToPosition(double targetX, double targetY, double drivePow, double desiredOrientation, double distanceErr, double turnErr, double turnPow){
 
         double distanceToTargX = targetX - positionUpdate.returnXCoordinate();
