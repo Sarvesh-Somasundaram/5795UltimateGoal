@@ -35,7 +35,7 @@ public class Teleop extends OpMode {
     private boolean isWobbleIn = false;
     double robotOrientation;
 
-    public Servo shooterServo, wobbleServo;
+    public Servo shooterServo, wobbleServo, dropServo;
     public long setTime = System.currentTimeMillis();
 
     public int powerIsPressed = 0;
@@ -66,6 +66,9 @@ public class Teleop extends OpMode {
         shooterServo.setPosition(0.312);
 
         intake = hardwareMap.dcMotor.get("intake");
+        dropServo = hardwareMap.servo.get("drop");
+
+        dropServo.setPosition(0.45);
 
 
         wobble = hardwareMap.dcMotor.get("wobble");
@@ -175,6 +178,10 @@ public class Teleop extends OpMode {
         if (gamepad1.a) {
             isPressed = true;
             shoot();
+        }
+
+        if (gamepad1.b) {
+            isWobbleIn = false;
         }
 
         // functions to power the intake mechanism
