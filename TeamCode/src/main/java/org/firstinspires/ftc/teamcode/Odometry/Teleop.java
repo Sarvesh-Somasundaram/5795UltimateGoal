@@ -239,14 +239,14 @@ public class Teleop extends OpMode {
 
             else if(isWobbleIn) {
                 if(wobbleServo.getPosition() == 0) {
-                    wobble.setTargetPosition(320);
+                    wobble.setTargetPosition(260);
                     wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     wobble.setPower(0.3);
 
                     while (wobble.isBusy()) {
-                        wobbleServo.setPosition(0.7);
                     }
 
+                    wobbleServo.setPosition(0.7);
                     wobble.setPower(0);
                     wobble.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
                     wobble.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -254,7 +254,7 @@ public class Teleop extends OpMode {
 
                 else if (wobbleServo.getPosition() > 0.65) {
 
-                    wobble.setTargetPosition(-320);
+                    wobble.setTargetPosition(-260);
                     wobble.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                     wobble.setPower(0.3);
 
